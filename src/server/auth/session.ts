@@ -1,19 +1,22 @@
 import "server-only";
 import { createHash, randomBytes } from "node:crypto";
 import { nanoid } from "nanoid";
+import { DEFAULT_LOCALE, hasLocale } from "@/i18n/locales";
 import { getDb } from "@/server/db";
+import type { Tables } from "@/types/database";
 import { SESSION_TTL_SECONDS, type SessionUser } from "./types";
 
-type SessionRow = {
-  expires_at: string;
-  accounts: {
-    id: string;
-    first_name: string;
-    last_name: string;
-    email: string;
-    active: boolean;
-    created_at: string;
-  } | null;
+type SessionRow = Pick<Tables<"sessions">, "expires_at"> & {
+  accounts: Pick<
+    Tables<"accounts">,
+    | "id"
+    | "first_name"
+    | "last_name"
+    | "email"
+    | "active"
+    | "created_at"
+    | "locale"
+  > | null;
 };
 
 // 32 random bytes: 43 characters of base64url, sent to the browser only.
@@ -58,7 +61,7 @@ export async function getSessionUser(
   const { data, error } = await getDb()
     .from("sessions")
     .select(
-      "expires_at, accounts!inner(id, first_name, last_name, email, active, created_at)",
+      "expires_at, accounts!inner(id, first_name, last_name, email, active, created_at, locale)",
     )
     .eq("token_hash", hashSessionToken(token))
     .gt("expires_at", now.toISOString())
@@ -80,6 +83,7 @@ export async function getSessionUser(
     lastName: account.last_name,
     email: account.email,
     createdAt: new Date(account.created_at),
+    locale: hasLocale(account.locale) ? account.locale : DEFAULT_LOCALE,
   };
 }
 

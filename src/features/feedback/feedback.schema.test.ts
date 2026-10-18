@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { isMessageKey } from "@/i18n/dictionaries";
+import { translateMessage } from "@/i18n/t";
 import {
   createFeedbackSchema,
   hasReviewedSchema,
@@ -17,7 +19,11 @@ function fieldErrors(input: unknown) {
   const result = createFeedbackSchema.safeParse(input);
   if (result.success) return {};
   return Object.fromEntries(
-    result.error.issues.map((issue) => [issue.path.join("."), issue.message]),
+    result.error.issues.map((issue) => {
+      // Schemas return message keys; English is what the REST API shows
+      expect(isMessageKey(issue.message)).toBe(true);
+      return [issue.path.join("."), translateMessage("en", issue.message)];
+    }),
   );
 }
 

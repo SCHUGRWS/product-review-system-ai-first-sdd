@@ -1,5 +1,7 @@
-import Link from "next/link";
+import { LANDING_PATH } from "@/lib/routes";
 import { cn } from "@/lib/utils";
+import { LocalizedLink } from "./localized-link";
+import { SiteFooter } from "./site-footer";
 
 // Two-column page: content on paper, a cobalt panel for the review slip.
 // On small screens the panel becomes a band above the content. From lg the
@@ -10,11 +12,14 @@ export function SplitLayout({
   children,
   panel,
   panelFirstOnMobile = true,
+  footer = true,
   className,
 }: {
   children: React.ReactNode;
   panel: React.ReactNode;
   panelFirstOnMobile?: boolean;
+  // The landing page shows the full study notice instead (specs/home.md)
+  footer?: boolean;
   className?: string;
 }) {
   return (
@@ -25,15 +30,16 @@ export function SplitLayout({
       )}
     >
       <div className="flex flex-col px-6 py-6 sm:px-12 lg:col-start-2 lg:row-start-1 lg:px-16 lg:py-10">
-        <Link
-          href="/"
+        <LocalizedLink
+          href={LANDING_PATH}
           className="w-fit rounded-sm text-[1rem] font-extrabold tracking-[-0.02em] text-ink focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cobalt"
         >
           Product Review System
-        </Link>
+        </LocalizedLink>
         <main className="flex flex-1 flex-col justify-center py-10 lg:py-16">
           {children}
         </main>
+        {footer && <SiteFooter variant="column" />}
       </div>
       <aside
         aria-hidden="true"

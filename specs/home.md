@@ -9,6 +9,7 @@ First version (delivered 2026-10-17): `/home` showed the signed-in user's greeti
 Now `/home` becomes the product catalog. It shows lists of products imported from Amazon deals (`specs/product.md`) and a search, so the user can find the product they want to review. The previous content moves to a personal page at `/me`. Its "Write feedback" button now leads to `/home`, where the user picks the product.
 
 ## Functional requirements
+0. Paths below are shown without the locale: since translation (`specs/i18n.md`) every page is served under '/en/…' or '/pt-BR/…' (e.g. '/pt-BR/home'), and un-prefixed URLs redirect there
 1. Both pages are only for signed-in users. Without a valid session the user is redirected to '/auth/sign-in' (checked on the server with `requireUser()`)
 2. Shared header for signed-in pages
     1. Product name linking to '/home'
@@ -32,12 +33,18 @@ Now `/home` becomes the product catalog. It shows lists of products imported fro
     2. "Write feedback" button linking to '/home' (and focusing the search)
     3. "Your recent feedback" (`RecentFeedback` from `specs/feedback.md`, now with the product)
     4. Account summary: full name, email, "Member since <Month YYYY>"
+    5. Language switch (added with translation, `specs/i18n.md`): a "Language" control below the account summary with "English" and "Português". Changing it saves the language on the account (tRPC `account.setLocale`), sets the `prs_locale` cookie and reloads the same page in the new locale ('/en/me' ↔ '/pt-BR/me')
 5. After sign-in the user lands on '/home' (unchanged)
+6. Study-project disclaimer (added 2026-10-18), copy in `src/i18n` (`disclaimer.*`)
+    1. Landing page '/': a calm inline notice below the calls to action (not a modal or banner), titled "A study project": non-profit study and portfolio project; personal data is used only to run the demo and never shared, sold or used for anything else; no emails are ever sent; some features (product imports, AI summaries) may be turned off at times, and an issue on GitHub gets them re-enabled for testing
+    2. Every other page (auth pages, '/home', '/me', '/products/<id>', '/products/<id>/feedback', product 404): a `<footer>` with the short version ("Study project, non-profit. …") at the bottom of the page. The landing page shows only the full notice
+    3. Both link "Contact on GitHub" to the repository issues (new tab, `rel="noopener noreferrer"`, announced as opening a new tab)
 
 ## Non-Functional requirements
 - UI/UX
     - Same identity ("review slip", cobalt two-ink, Schibsted Grotesk). Product cards stay quiet; the slip stays the signature element
     - Responsive: lists scroll horizontally with snap; grids go from 2 columns (mobile) to 5 (desktop); no page-level horizontal scroll
+    - Disclaimer: quiet small slate text with a cobalt link, inside the page container (or the split layout's content column); no page-level horizontal scroll at 320px
     - Accessible: each list is a labelled region; the search has a label; results count announced politely
 - Performance
     - Static shell prerendered; lists stream in behind `<Suspense>` with skeletons
@@ -53,7 +60,7 @@ Now `/home` becomes the product catalog. It shows lists of products imported fro
 - Import or store products (`specs/product.md`)
 - Implement the feedback form (`specs/feedback.md`)
 - Filters beyond category (price, brand) or sorting controls
-- Change the public landing page '/'
+- Change the public landing page '/' beyond the study notice (requirement 6)
 
 ## Technologies (Stack)
 - React.js
@@ -70,6 +77,7 @@ Now `/home` becomes the product catalog. It shows lists of products imported fro
 - A product title opens the Amazon page in a new tab; "Give feedback" opens the feedback page of that product
 - '/me' shows the greeting, account, recent feedback and a "Write feedback" link to '/home'
 - Both pages redirect to '/auth/sign-in' without a session
+- '/' shows "A study project" with the GitHub link; auth and signed-in pages end with the disclaimer footer and the same link
 
 ## Results
 Signed-in users browse and search real products, and pick one to review; their personal page keeps their account and reviews.

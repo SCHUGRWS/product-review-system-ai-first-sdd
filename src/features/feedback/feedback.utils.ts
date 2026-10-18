@@ -1,9 +1,20 @@
-import { formatDistanceStrict } from "date-fns";
+import { formatTimeAgo } from "@/i18n/format";
+import type { Locale } from "@/i18n/locales";
+import type { T } from "@/i18n/message";
 
-// "Posted 3 days ago"; anything under a minute reads "Posted just now".
-export function postedAgo(createdAt: Date, now: Date = new Date()) {
-  if (now.getTime() - createdAt.getTime() < 60_000) return "Posted just now";
-  return `Posted ${formatDistanceStrict(createdAt, now, { addSuffix: true })}`;
+// "Posted 3 days ago" / "Publicada há 3 dias"; under a minute reads "Posted just now".
+export function postedAgo(
+  t: T,
+  locale: Locale,
+  createdAt: Date,
+  now: Date = new Date(),
+) {
+  if (now.getTime() - createdAt.getTime() < 60_000) {
+    return t("feedback.postedJustNow");
+  }
+  return t("feedback.postedAgo", {
+    ago: formatTimeAgo(locale, createdAt, now),
+  });
 }
 
 // Amazon titles run long; the slip prints at most `max` characters, cut at a

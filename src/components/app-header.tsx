@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { SignOutButton } from "@/features/me/sign-out-button";
+import { getLocale, getT } from "@/i18n/server";
 import { PAGE_CONTAINER } from "@/lib/layout";
-import { HOME_PATH } from "@/lib/routes";
+import { homeHref } from "@/lib/routes";
 import { shortName } from "@/lib/user-name";
 import { cn } from "@/lib/utils";
 import type { SessionUser } from "@/server/auth/types";
@@ -18,11 +19,12 @@ const NAV =
   "col-span-2 row-start-2 sm:col-span-1 sm:row-start-1 sm:col-start-2";
 
 // Header for signed-in pages (server component). Only the short name reaches the HTML.
-export function AppHeader({
+export async function AppHeader({
   user,
 }: {
   user: Pick<SessionUser, "firstName" | "lastName">;
 }) {
+  const t = await getT();
   return (
     <header className="border-b border-rule bg-paper">
       <div className={BAR}>
@@ -30,7 +32,7 @@ export function AppHeader({
         <AppNav className={NAV} />
         <div className="flex items-center gap-3 sm:gap-4 sm:py-3">
           <p className="text-[0.9375rem] text-slate">
-            <span className="sr-only">Signed in as </span>
+            <span className="sr-only">{t("nav.signedInAs")} </span>
             <span className="font-semibold whitespace-nowrap text-ink">
               {shortName(user)}
             </span>
@@ -61,10 +63,11 @@ export function AppHeaderSkeleton() {
   );
 }
 
-function ProductLink() {
+async function ProductLink() {
+  const locale = await getLocale();
   return (
     <Link
-      href={HOME_PATH}
+      href={homeHref(locale)}
       className="w-fit rounded-sm text-[1rem] leading-tight font-extrabold tracking-[-0.02em] text-ink focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cobalt"
     >
       Product Review System

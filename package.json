@@ -17,6 +17,8 @@
     "db:link": "supabase link",
     "db:push": "supabase db push",
     "db:test": "supabase test db --local",
+    "db:types": "supabase gen types typescript --local > src/types/database.ts && biome format --write src/types/database.ts",
+    "summaries:warm": "node scripts/summaries-warm.mjs",
     "n8n:build": "node n8n/build-workflow.mjs",
     "n8n:up": "docker compose -f docker-compose.n8n.yml --env-file .env.local up -d",
     "n8n:down": "docker compose -f docker-compose.n8n.yml down",

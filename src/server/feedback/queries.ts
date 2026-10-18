@@ -6,20 +6,17 @@ import type {
   FeedbackProduct,
 } from "@/features/feedback/feedback.schema";
 import { getDb } from "@/server/db";
+import type { Tables } from "@/types/database";
 
-type ProductRow = {
-  id: string;
-  title: string;
-  image_url: string;
-  url: string;
-};
+type ProductRow = Pick<
+  Tables<"products">,
+  "id" | "title" | "image_url" | "url"
+>;
 
-export type FeedbackRow = {
-  id: string;
-  product_name: string;
-  rating: number;
-  comment: string;
-  created_at: string;
+export type FeedbackRow = Pick<
+  Tables<"feedbacks">,
+  "id" | "product_name" | "rating" | "comment" | "created_at"
+> & {
   /** Embedded through the product_id foreign key; null for legacy rows */
   product?: ProductRow | null;
 };

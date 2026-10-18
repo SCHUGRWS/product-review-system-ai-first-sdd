@@ -57,7 +57,10 @@ describe("requireUser", () => {
     cookieStore.get.mockReturnValue({ value: "expired" });
     getSessionUser.mockResolvedValue(null);
 
-    await expect(requireUser()).rejects.toThrow("NEXT_REDIRECT /auth/sign-in");
-    expect(redirect).toHaveBeenCalledWith("/auth/sign-in");
+    // To the sign-in page of the request's locale ([lang] root param)
+    await expect(requireUser()).rejects.toThrow(
+      "NEXT_REDIRECT /en/auth/sign-in",
+    );
+    expect(redirect).toHaveBeenCalledWith("/en/auth/sign-in");
   });
 });

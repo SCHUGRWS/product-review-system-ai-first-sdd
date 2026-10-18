@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { getHTTPStatusCodeFromError } from "@trpc/server/http";
 import { ZodError, z } from "zod";
+import { translateMessage } from "@/i18n/t";
 import { VALIDATION_MESSAGE } from "@/server/trpc";
 
 // Shared helpers for the REST routes in /api/v1, which run the same tRPC
@@ -34,7 +35,8 @@ export function toErrorResponse(
       return Response.json(
         {
           error: VALIDATION_MESSAGE,
-          fields: z.flattenError(error.cause).fieldErrors,
+          // The schemas carry message keys; the REST API answers in English
+          fields: englishFieldErrors(z.flattenError(error.cause).fieldErrors),
         },
         { status, headers },
       );
@@ -46,4 +48,15 @@ export function toErrorResponse(
     { error: "Internal server error" },
     { status: 500, headers },
   );
+}
+
+function englishFieldErrors(
+  fields: Record<string, string[] | undefined>,
+): Record<string, string[]> {
+  const result: Record<string, string[]> = {};
+  for (const [field, messages] of Object.entries(fields)) {
+    if (messages)
+      result[field] = messages.map((m) => translateMessage("en", m));
+  }
+  return result;
 }

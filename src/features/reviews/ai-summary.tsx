@@ -4,7 +4,9 @@ import type {
   SummaryLocale,
   SummaryResult,
 } from "@/features/reviews/summary.schema";
-import { t } from "@/i18n/t";
+import type { Locale } from "@/i18n/locales";
+import type { T } from "@/i18n/message";
+import { getLocale, getT } from "@/i18n/server";
 import { cn } from "@/lib/utils";
 import { getOrCreateSummary } from "@/server/reviews/summary";
 import { summaryFooter } from "./reviews.utils";
@@ -13,13 +15,13 @@ import { summaryFooter } from "./reviews.utils";
 // page renders it behind its own <Suspense>, so nothing else waits for the model.
 export async function AiSummary({
   product,
-  locale,
   stats,
 }: {
   product: { id: string; title: string };
-  locale: SummaryLocale;
   stats: { count: number; average: number | null };
 }) {
+  // The summary is written and cached in the viewer's language
+  const locale: SummaryLocale = await getLocale();
   let result: SummaryResult;
   try {
     result = await getOrCreateSummary(product, locale, stats);
@@ -27,12 +29,12 @@ export async function AiSummary({
     console.error("[AiSummary] failed to load the summary", error);
     result = { status: "unavailable" };
   }
-  return <SummaryPanel result={result} />;
+  return <SummaryPanel result={result} t={await getT()} locale={locale} />;
 }
 
 const PANEL = "rounded-md bg-mist px-6 py-6 sm:px-8 sm:py-7";
 
-function Label() {
+function Label({ t }: { t: T }) {
   return (
     <p className="text-[0.875rem] font-semibold text-cobalt">
       {t("reviews.summary.label")}
@@ -41,7 +43,15 @@ function Label() {
 }
 
 // A quiet mist panel: the slips below stay the page's bold element.
-export function SummaryPanel({ result }: { result: SummaryResult }) {
+export function SummaryPanel({
+  result,
+  t,
+  locale,
+}: {
+  result: SummaryResult;
+  t: T;
+  locale: Locale;
+}) {
   if (result.status !== "ready") {
     const [title, body] =
       result.status === "too-few"
@@ -57,7 +67,7 @@ export function SummaryPanel({ result }: { result: SummaryResult }) {
         data-state={result.status}
         className={PANEL}
       >
-        <Label />
+        <Label t={t} />
         <p className="mt-2 text-[1.125rem] font-semibold tracking-[-0.01em] text-ink">
           {title}
         </p>
@@ -77,7 +87,7 @@ export function SummaryPanel({ result }: { result: SummaryResult }) {
       className={cn(PANEL, ARRIVE)}
     >
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <Label />
+        <Label t={t} />
         <p className="rounded-full border border-cobalt/40 px-2.5 py-0.5 text-[0.8125rem] font-semibold text-cobalt">
           {t(`reviews.summary.verdict.${summary.verdict}`)}
         </p>
@@ -105,7 +115,7 @@ export function SummaryPanel({ result }: { result: SummaryResult }) {
       )}
 
       <p className="mt-6 border-t border-dashed border-rule pt-3 text-[0.8125rem] text-slate">
-        {summaryFooter(result.reviewCount, result.generatedAt)}
+        {summaryFooter(t, locale, result.reviewCount, result.generatedAt)}
       </p>
     </section>
   );
@@ -140,7 +150,8 @@ function Points({
 }
 
 // Same footprint as the panel while the summary loads (or is being written).
-export function AiSummarySkeleton() {
+export async function AiSummarySkeleton() {
+  const t = await getT();
   return (
     <section
       aria-busy="true"
@@ -149,7 +160,7 @@ export function AiSummarySkeleton() {
       data-state="loading"
       className={PANEL}
     >
-      <Label />
+      <Label t={t} />
       <div className="mt-3 h-6 w-3/4 rounded-sm bg-paper/80 motion-safe:animate-pulse" />
       <div className="mt-3 h-4 w-full rounded-sm bg-paper/80 motion-safe:animate-pulse" />
       <div className="mt-2 h-4 w-5/6 rounded-sm bg-paper/80 motion-safe:animate-pulse" />

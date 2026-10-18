@@ -1,41 +1,36 @@
-import { t } from "@/i18n/t";
+import { formatCount, formatShortDate } from "@/i18n/format";
+import type { Locale } from "@/i18n/locales";
+import type { T } from "@/i18n/message";
 
-const average = new Intl.NumberFormat("en-US", {
-  minimumFractionDigits: 1,
-  maximumFractionDigits: 1,
-});
-
-// 3.6667 -> "3.7"
-export function formatAverage(value: number) {
-  return average.format(value);
-}
-
-// 1 -> "1 review"; 3 -> "3 reviews"
-export function reviewCountLabel(count: number) {
+// 1 -> "1 review"; 1234 -> "1,234 reviews" / "1.234 avaliações"
+export function reviewCountLabel(t: T, locale: Locale, count: number) {
   return t(count === 1 ? "reviews.count.one" : "reviews.count.other", {
-    count,
+    count: formatCount(locale, count),
   });
 }
 
 // 1 -> "1 star"; 5 -> "5 stars"
-export function starsLabel(count: number) {
+export function starsLabel(t: T, count: number) {
   return t(count === 1 ? "reviews.stars.one" : "reviews.stars.other", {
     count,
   });
 }
 
-const summaryDate = new Intl.DateTimeFormat("en-US", {
-  dateStyle: "medium",
-  timeZone: "UTC",
-});
-
 // "AI summary of 3 reviews, updated Oct 18, 2026"
-export function summaryFooter(reviewCount: number, generatedAt: Date) {
+export function summaryFooter(
+  t: T,
+  locale: Locale,
+  reviewCount: number,
+  generatedAt: Date,
+) {
   return t(
     reviewCount === 1
       ? "reviews.summary.footer.one"
       : "reviews.summary.footer.other",
-    { count: reviewCount, date: summaryDate.format(generatedAt) },
+    {
+      count: formatCount(locale, reviewCount),
+      date: formatShortDate(locale, generatedAt),
+    },
   );
 }
 

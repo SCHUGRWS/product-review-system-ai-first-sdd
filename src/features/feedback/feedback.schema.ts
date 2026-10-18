@@ -8,24 +8,25 @@ export const COMMENT_MAX = 2000;
 export const PRODUCT_ID_PATTERN = /^[A-Za-z0-9_-]{21}$/;
 
 export const productIdSchema = z
-  .string({ error: "Choose a product to review" })
-  .regex(PRODUCT_ID_PATTERN, "Choose a product to review");
+  .string({ error: "validation.product.required" })
+  .regex(PRODUCT_ID_PATTERN, "validation.product.required");
 
-// Shared by the form (client) and the API (server). Unknown keys such as a
+// Shared by the form (client) and the API (server). Messages are keys of
+// src/i18n/dictionaries (English on the REST API, see to-response.ts). Unknown keys such as a
 // client-sent `accountId` or `productName` are stripped: the author comes from
 // the session and the product name from the catalog.
 export const createFeedbackSchema = z.object({
   productId: productIdSchema,
   rating: z
-    .number({ error: "Choose a rating" })
-    .int("Rating must be a whole number of stars")
-    .min(1, "Choose a rating")
-    .max(5, "Rating must be at most 5 stars"),
+    .number({ error: "validation.rating.required" })
+    .int("validation.rating.int")
+    .min(1, "validation.rating.required")
+    .max(5, "validation.rating.max"),
   comment: z
-    .string({ error: "Comment is required" })
+    .string({ error: "validation.comment.required" })
     .trim()
-    .min(COMMENT_MIN, `Comment must have at least ${COMMENT_MIN} characters`)
-    .max(COMMENT_MAX, `Comment must have at most ${COMMENT_MAX} characters`),
+    .min(COMMENT_MIN, "validation.comment.min")
+    .max(COMMENT_MAX, "validation.comment.max"),
 });
 
 export const listFeedbackSchema = z

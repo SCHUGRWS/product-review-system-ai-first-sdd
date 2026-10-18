@@ -1,6 +1,7 @@
-import { formatAverage } from "@/features/reviews/reviews.utils";
-import { t } from "@/i18n/t";
-import { formatCount, formatReviewCount } from "./format";
+import { reviewCountLabel } from "@/features/reviews/reviews.utils";
+import { formatAverage, formatCount } from "@/i18n/format";
+import type { Locale } from "@/i18n/locales";
+import type { T } from "@/i18n/message";
 import type { Product, ProductCommunity } from "./product.types";
 
 // Copy of the product card's review lines (specs/product.md, requirement 7):
@@ -16,6 +17,8 @@ export type CommunityCopy =
  * than a wrong "No reviews yet".
  */
 export function communityCopy(
+  t: T,
+  locale: Locale,
   community: ProductCommunity | undefined,
 ): CommunityCopy | null {
   if (!community) return null;
@@ -28,35 +31,41 @@ export function communityCopy(
       community.count === 1
         ? "products.card.reviewsHere.one"
         : "products.card.reviewsHere.other",
-      { count: formatCount(community.count) },
+      { count: formatCount(locale, community.count) },
     ),
-    average: formatAverage(community.average),
+    average: formatAverage(locale, community.average),
     stars: Math.round(community.average),
   };
 }
 
 /** "4.6 on Amazon (1,234 reviews)", "4.6 on Amazon", or null without a rating */
 export function amazonRatingCopy(
+  t: T,
+  locale: Locale,
   product: Pick<Product, "rating" | "reviewCount">,
 ): string | null {
   if (product.rating === null) return null;
-  const rating = product.rating.toFixed(1);
+  const rating = formatAverage(locale, product.rating);
   return product.reviewCount !== null
     ? t("reviews.amazonRating", {
         rating,
-        count: formatReviewCount(product.reviewCount),
+        count: reviewCountLabel(t, locale, product.reviewCount),
       })
     : t("reviews.amazonRatingNoCount", { rating });
 }
 
 /** "See 3 reviews" when the product has reviews here, else "See feedback" */
-export function reviewsLinkCopy(community: ProductCommunity | undefined) {
+export function reviewsLinkCopy(
+  t: T,
+  locale: Locale,
+  community: ProductCommunity | undefined,
+) {
   const count = community?.count ?? 0;
   if (count === 0) return t("reviews.seeFeedback");
   return t(
     count === 1
       ? "products.card.seeReviews.one"
       : "products.card.seeReviews.other",
-    { count: formatCount(count) },
+    { count: formatCount(locale, count) },
   );
 }

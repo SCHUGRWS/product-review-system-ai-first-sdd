@@ -6,6 +6,15 @@ import {
   productBatches,
 } from "./fixtures/products";
 
+// Every page lives under /<locale>/ (specs/i18n.md). Specs run in English
+// unless they say otherwise; path("/home") -> "/en/home".
+export type E2ELocale = "en" | "pt-BR";
+export const E2E_LOCALE: E2ELocale = "en";
+
+export function path(pathname: string, locale: E2ELocale = E2E_LOCALE) {
+  return pathname === "/" ? `/${locale}` : `/${locale}${pathname}`;
+}
+
 export type TestAccount = {
   firstName: string;
   lastName: string;
@@ -34,11 +43,11 @@ export async function createAccount(
 
 // Signs in through the UI and waits for the home page.
 export async function signIn(page: Page, account: TestAccount) {
-  await page.goto("/auth/sign-in");
+  await page.goto(path("/auth/sign-in"));
   await page.getByLabel("Email").fill(account.email);
   await page.getByLabel("Password").fill(account.password);
   await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page).toHaveURL("/home");
+  await expect(page).toHaveURL(path("/home"));
 }
 
 // Imports products through the n8n import endpoint (idempotent upsert by ASIN).
@@ -102,7 +111,7 @@ export async function findProductCard(
   page: Page,
   product: { query: string; title: string },
 ) {
-  await page.goto(`/home?q=${encodeURIComponent(product.query)}`);
+  await page.goto(`${path("/home")}?q=${encodeURIComponent(product.query)}`);
   const card = page.getByRole("article").filter({
     has: page.getByRole("heading", { level: 3, name: product.title }),
   });

@@ -1,3 +1,8 @@
+import {
+  LOCALE_COOKIE,
+  LOCALE_COOKIE_MAX_AGE,
+  type Locale,
+} from "@/i18n/locales";
 import { SESSION_COOKIE } from "./types";
 
 // Attributes shared by the session cookie and the cookie that clears it.
@@ -30,4 +35,11 @@ export function readSessionToken(cookieHeader: string | null): string | null {
     return value || null;
   }
   return null;
+}
+
+// The UI language for URLs without a locale (read by src/proxy.ts). Set when
+// the user picks a language on /me and at sign-in from the account; kept on
+// sign-out, so the sign-in page stays in that language.
+export function serializeLocaleCookie(locale: Locale): string {
+  return `${LOCALE_COOKIE}=${locale}; Max-Age=${LOCALE_COOKIE_MAX_AGE}; ${attributes()}`;
 }

@@ -1,7 +1,11 @@
-import { cn } from "@/lib/utils";
+"use client";
 
-export const STAR_PATH =
-  "M12 2.5l2.94 6.1 6.56.86-4.8 4.6 1.2 6.54L12 17.4l-5.9 3.2 1.2-6.54-4.8-4.6 6.56-.86z";
+import { useT } from "@/i18n/client";
+import { cn } from "@/lib/utils";
+import { STAR_PATH } from "./star-path";
+
+// Client components so they read the UI language from <I18nProvider>; Server
+// Components render them with plain props.
 
 export function Stars({
   rating,
@@ -10,10 +14,11 @@ export function Stars({
   rating: number;
   className?: string;
 }) {
+  const t = useT();
   return (
     <div
       role="img"
-      aria-label={`${rating} out of 5 stars`}
+      aria-label={t("common.starsLabel", { rating })}
       className={cn("flex gap-1 text-cobalt", className)}
     >
       {[1, 2, 3, 4, 5].map((n) => (
@@ -57,6 +62,7 @@ export function ReviewSlip({
   quoteClassName,
   animate = false,
 }: ReviewSlipProps) {
+  const t = useT();
   return (
     <figure className={cn("slip-shadow relative w-full max-w-sm", className)}>
       <div
@@ -77,7 +83,7 @@ export function ReviewSlip({
         </div>
         <figcaption className="mt-7 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-t border-dashed border-rule pt-4 text-[0.875rem]">
           <span className="whitespace-nowrap text-slate">
-            Review by{" "}
+            {t("common.reviewBy")}{" "}
             <strong className="font-semibold text-ink">{author}</strong>
           </span>
           {detail && (

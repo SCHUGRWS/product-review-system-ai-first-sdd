@@ -1,12 +1,16 @@
 import "server-only";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/types/database";
 
-let client: SupabaseClient | undefined;
+// Typed from the generated schema (src/types/database.ts, `pnpm db:types`)
+export type Db = SupabaseClient<Database>;
+
+let client: Db | undefined;
 
 // Server-side Supabase client with elevated access (bypasses RLS).
 // Works with local (`supabase start`) or hosted projects; only env vars change.
 // Never import this from client components.
-export function getDb(): SupabaseClient {
+export function getDb(): Db {
   if (!client) {
     const url = process.env.SUPABASE_URL;
     // Hosted projects issue `sb_secret_...` keys; the legacy service_role JWT also works
@@ -17,7 +21,7 @@ export function getDb(): SupabaseClient {
         "SUPABASE_URL and SUPABASE_SECRET_KEY (or SUPABASE_SERVICE_ROLE_KEY) must be set",
       );
     }
-    client = createClient(url, key, {
+    client = createClient<Database>(url, key, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
   }

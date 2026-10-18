@@ -105,14 +105,16 @@ describe("isValidSlug", () => {
 });
 
 describe("catalogHref", () => {
-  it("builds canonical /home URLs", () => {
-    expect(catalogHref({})).toBe("/home");
-    expect(catalogHref({ category: "tvs" })).toBe("/home?category=tvs");
-    expect(catalogHref({ category: "tvs", page: 1 })).toBe(
-      "/home?category=tvs",
+  it("builds canonical /<locale>/home URLs", () => {
+    expect(catalogHref("en", {})).toBe("/en/home");
+    expect(catalogHref("en", { category: "tvs" })).toBe(
+      "/en/home?category=tvs",
     );
-    expect(catalogHref({ q: "smart tv", page: 2 })).toBe(
-      "/home?q=smart+tv&page=2",
+    expect(catalogHref("en", { category: "tvs", page: 1 })).toBe(
+      "/en/home?category=tvs",
+    );
+    expect(catalogHref("pt-BR", { q: "smart tv", page: 2 })).toBe(
+      "/pt-BR/home?q=smart+tv&page=2",
     );
   });
 });

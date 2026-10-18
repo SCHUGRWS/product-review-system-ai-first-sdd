@@ -1,11 +1,9 @@
-import Link from "next/link";
-import { HOME_PATH, ME_PATH } from "@/lib/routes";
-import { cn } from "@/lib/utils";
+"use client";
 
-const LINKS = [
-  { href: HOME_PATH, label: "Products" },
-  { href: ME_PATH, label: "My page" },
-] as const;
+import Link from "next/link";
+import { useLocale, useT } from "@/i18n/client";
+import { homeHref, meHref } from "@/lib/routes";
+import { cn } from "@/lib/utils";
 
 // The nav markup without reading the URL, so header skeletons can render it in
 // the static shell of dynamic routes (/products/[productId]); AppNav adds the
@@ -17,10 +15,16 @@ export function AppNavLinks({
   current?: string;
   className?: string;
 }) {
+  const t = useT();
+  const locale = useLocale();
+  const links = [
+    { href: homeHref(locale), label: t("nav.products") },
+    { href: meHref(locale), label: t("nav.me") },
+  ];
   return (
-    <nav aria-label="Main" className={className}>
+    <nav aria-label={t("nav.label")} className={className}>
       <ul className="flex items-center gap-6">
-        {LINKS.map(({ href, label }) => {
+        {links.map(({ href, label }) => {
           const isCurrent = current === href;
           return (
             <li key={href}>

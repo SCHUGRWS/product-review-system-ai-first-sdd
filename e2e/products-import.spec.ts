@@ -50,7 +50,7 @@ test.describe("products import", () => {
 
     const account = await createAccount(request);
     await signIn(page, account);
-    await page.goto(`/home?q=${word}`);
+    await page.goto(`/en/home?q=${word}`);
     const cards = page.getByRole("article").filter({ hasText: title });
     await expect(cards).toHaveCount(1);
     await expect(cards).toContainText("R$ 299,90");
@@ -59,7 +59,7 @@ test.describe("products import", () => {
     batch.products[0].price = "R$ 279,90";
     await seedProducts(request, [batch]);
 
-    await page.goto(`/home?q=${word}`);
+    await page.goto(`/en/home?q=${word}`);
     await expect(cards).toHaveCount(1);
     await expect(cards).toContainText("R$ 279,90");
   });

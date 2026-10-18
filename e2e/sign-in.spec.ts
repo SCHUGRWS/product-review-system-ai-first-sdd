@@ -24,7 +24,7 @@ test.describe("sign-in", () => {
   }) => {
     const account = await createAccount(request);
 
-    await page.goto("/auth/sign-in");
+    await page.goto("/en/auth/sign-in");
     await page.getByLabel("Email").fill(account.email);
     await page.getByLabel("Password").fill("wrong-password");
     await page.getByRole("button", { name: "Sign in" }).click();
@@ -32,7 +32,7 @@ test.describe("sign-in", () => {
     await expect(page.locator("form").getByRole("alert")).toHaveText(
       "Invalid email or password",
     );
-    await expect(page).toHaveURL("/auth/sign-in");
+    await expect(page).toHaveURL("/en/auth/sign-in");
     const cookies = await page.context().cookies();
     expect(cookies.some((cookie) => cookie.name === "prs_session")).toBe(false);
   });
@@ -44,9 +44,9 @@ test.describe("sign-in", () => {
     const account = await createAccount(request);
     await signIn(page, account);
 
-    await page.goto("/auth/sign-in");
+    await page.goto("/en/auth/sign-in");
 
-    await expect(page).toHaveURL("/home");
+    await expect(page).toHaveURL("/en/home");
   });
 
   test("shows field errors on an empty submit without calling the API", async ({
@@ -57,7 +57,7 @@ test.describe("sign-in", () => {
       if (req.url().includes("/api/")) apiCalls.push(req.url());
     });
 
-    await page.goto("/auth/sign-in");
+    await page.goto("/en/auth/sign-in");
     await page.getByRole("button", { name: "Sign in" }).click();
 
     await expect(page.getByText("Email is required")).toBeVisible();
@@ -77,7 +77,7 @@ test.describe("sign-in", () => {
 
     const cookies = await page.context().cookies();
     expect(cookies.some((cookie) => cookie.name === "prs_session")).toBe(false);
-    await page.goto("/auth/sign-in");
-    await expect(page).toHaveURL("/auth/sign-in");
+    await page.goto("/en/auth/sign-in");
+    await expect(page).toHaveURL("/en/auth/sign-in");
   });
 });

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { STAR_PATH } from "@/components/review-slip";
+import { STAR_PATH } from "@/components/star-path";
+import { useT } from "@/i18n/client";
 import { cn } from "@/lib/utils";
 
 const RATINGS = [1, 2, 3, 4, 5] as const;
@@ -29,6 +30,7 @@ export function StarRatingInput({
   describedBy,
   disabled = false,
 }: StarRatingInputProps) {
+  const t = useT();
   const [hovered, setHovered] = useState(0);
   const shown = hovered || value;
 
@@ -61,7 +63,11 @@ export function StarRatingInput({
             onBlur={onBlur}
             className="sr-only"
           />
-          <span className="sr-only">{n === 1 ? "1 star" : `${n} stars`}</span>
+          <span className="sr-only">
+            {t(n === 1 ? "reviews.stars.one" : "reviews.stars.other", {
+              count: n,
+            })}
+          </span>
           <svg
             viewBox="0 0 24 24"
             aria-hidden="true"

@@ -39,6 +39,7 @@ const account = {
   email: "ada@example.com",
   active: true,
   created_at: "2026-10-01T12:00:00Z",
+  locale: "pt-BR",
 };
 
 beforeEach(() => {
@@ -117,6 +118,7 @@ describe("getSessionUser", () => {
       lastName: "Lovelace",
       email: "ada@example.com",
       createdAt: new Date("2026-10-01T12:00:00Z"),
+      locale: "pt-BR",
     });
     // One query that looks up by hash and filters expired and inactive rows
     expect(from).toHaveBeenCalledOnce();

@@ -23,22 +23,35 @@ import {
   type SignUpInput,
   signUpSchema,
 } from "@/features/auth/sign-up.schema";
+import { useLocale, useT, useTranslateMessage } from "@/i18n/client";
+import { errorMessage } from "@/i18n/errors";
+import { localeHref, SIGN_UP_SUCCESS_PATH, signInHref } from "@/lib/routes";
 import { useTRPC } from "@/trpc/client";
 
 const FIELDS = [
-  { name: "firstName", label: "First name", type: "text", auto: "given-name" },
-  { name: "lastName", label: "Last name", type: "text", auto: "family-name" },
-  { name: "email", label: "Email", type: "email", auto: "email" },
+  {
+    name: "firstName",
+    label: "auth.field.firstName",
+    type: "text",
+    auto: "given-name",
+  },
+  {
+    name: "lastName",
+    label: "auth.field.lastName",
+    type: "text",
+    auto: "family-name",
+  },
+  { name: "email", label: "auth.field.email", type: "email", auto: "email" },
   {
     name: "password",
-    label: "Password",
+    label: "auth.field.password",
     type: "password",
     auto: "new-password",
-    hint: "At least 8 characters",
+    hint: "auth.passwordHint",
   },
   {
     name: "confirmPassword",
-    label: "Confirm password",
+    label: "auth.field.confirmPassword",
     type: "password",
     auto: "new-password",
   },
@@ -51,6 +64,9 @@ type SignUpFormApi = ReturnType<
 export function SignUpForm() {
   const router = useRouter();
   const trpc = useTRPC();
+  const t = useT();
+  const locale = useLocale();
+  const translate = useTranslateMessage();
 
   const form = useForm<SignUpInput, unknown, SignUpData>({
     resolver: zodResolver(signUpSchema),
@@ -73,11 +89,12 @@ export function SignUpForm() {
     trpc.auth.signUp.mutationOptions({
       onSuccess: () => {
         shouldReset.current = true;
-        router.push("/auth/sign-up/success");
+        router.push(localeHref(locale, SIGN_UP_SUCCESS_PATH));
       },
       onError: (error) => {
+        const message = errorMessage(t, error);
         if (error.data?.code === "CONFLICT") {
-          form.setError("email", { message: error.message });
+          form.setError("email", { message });
         }
         const fieldErrors: Partial<Record<string, string[]>> =
           error.data?.zodError?.fieldErrors ?? {};
@@ -85,7 +102,7 @@ export function SignUpForm() {
           const message = fieldErrors[field.name]?.[0];
           if (message) form.setError(field.name, { message });
         }
-        toast.error(error.message);
+        toast.error(message);
       },
     }),
   );
@@ -109,11 +126,9 @@ export function SignUpForm() {
     <SplitLayout panel={<NamePreview control={form.control} />}>
       <div className="w-full max-w-md">
         <h1 className="text-[1.953rem] leading-tight font-extrabold tracking-[-0.03em] text-ink">
-          Create your account
+          {t("auth.signUp.title")}
         </h1>
-        <p className="mt-2 text-[1rem] text-slate">
-          Your name appears on every review you post.
-        </p>
+        <p className="mt-2 text-[1rem] text-slate">{t("auth.signUp.lead")}</p>
 
         <form
           noValidate
@@ -136,19 +151,23 @@ export function SignUpForm() {
               className="mt-2 h-12 w-full text-[1rem] font-semibold hover:bg-cobalt-deep"
             >
               {isPending && <Spinner />}
-              {isPending ? "Creating account..." : "Create account"}
+              {isPending ? t("auth.signUp.pending") : t("auth.signUp.submit")}
             </Button>
-            {errors.root && <FieldError errors={[errors.root]} />}
+            {errors.root && (
+              <FieldError
+                errors={[{ message: translate(errors.root.message) }]}
+              />
+            )}
           </FieldGroup>
         </form>
 
         <p className="mt-6 text-[0.9375rem] text-slate">
-          Already have an account?{" "}
+          {t("auth.signUp.haveAccount")}{" "}
           <Link
-            href="/auth/sign-in"
+            href={signInHref(locale)}
             className="rounded-sm font-semibold text-cobalt underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cobalt"
           >
-            Sign in
+            {t("auth.signUp.signIn")}
           </Link>
         </p>
       </div>
@@ -158,26 +177,28 @@ export function SignUpForm() {
 
 // Live preview of how the person's name will be printed on their reviews.
 function NamePreview({ control }: { control: Control<SignUpInput> }) {
+  const t = useT();
   const [firstName, lastName] = useWatch({
     control,
     name: ["firstName", "lastName"],
   });
   const first = firstName.trim();
   const initial = lastName.trim().charAt(0).toUpperCase();
-  const author = first ? `${first}${initial ? ` ${initial}.` : ""}` : "you";
+  const author = first
+    ? `${first}${initial ? ` ${initial}.` : ""}`
+    : t("common.you");
 
   return (
     <ReviewSlip
-      product="Noise-cancelling headphones"
+      product={t("auth.signUp.slip.product")}
       rating={4}
       author={<span data-testid="slip-author">{author}</span>}
-      detail="Owned 2 months"
+      detail={t("auth.signUp.slip.detail")}
       animate
       className="max-w-[18rem] -rotate-2 sm:max-w-sm"
       quoteClassName="mt-3 line-clamp-2 text-[1.0625rem] lg:mt-5 lg:line-clamp-none lg:text-[1.25rem]"
     >
-      Quiet on the train and comfortable for a full workday. The case is bulkier
-      than it needs to be.
+      {t("auth.signUp.slip.quote")}
     </ReviewSlip>
   );
 }
@@ -189,6 +210,8 @@ function FormField({
   field: (typeof FIELDS)[number];
   form: SignUpFormApi;
 }) {
+  const t = useT();
+  const translate = useTranslateMessage();
   const error = form.formState.errors[field.name];
   const id = `sign-up-${field.name}`;
   const hint = "hint" in field ? field.hint : undefined;
@@ -196,7 +219,7 @@ function FormField({
   return (
     <Field data-invalid={!!error} className="gap-1.5">
       <FieldLabel htmlFor={id} className="text-[0.9375rem] font-medium">
-        {field.label}
+        {t(field.label)}
       </FieldLabel>
       <Input
         id={id}
@@ -209,10 +232,10 @@ function FormField({
       />
       {hint && !error && (
         <p id={`${id}-hint`} className="text-[0.8125rem] text-slate">
-          {hint}
+          {t(hint)}
         </p>
       )}
-      <FieldError errors={[error]} />
+      <FieldError errors={[error && { message: translate(error.message) }]} />
     </Field>
   );
 }

@@ -31,7 +31,7 @@ async function openReviewsPage(
   await expect(
     page.getByRole("heading", { level: 1, name: product.title }),
   ).toBeVisible();
-  return new URL(page.url()).pathname.split("/")[2];
+  return new URL(page.url()).pathname.split("/")[3];
 }
 
 async function expectFits(page: Page) {
@@ -70,15 +70,15 @@ test.describe("product reviews", () => {
   test.describe.configure({ mode: "default" });
 
   test("anonymous visit redirects to sign-in", async ({ page }) => {
-    await page.goto("/products/V1StGXR8_Z5jdHi6B-myT");
-    await expect(page).toHaveURL("/auth/sign-in");
+    await page.goto("/en/products/V1StGXR8_Z5jdHi6B-myT");
+    await expect(page).toHaveURL("/en/auth/sign-in");
   });
 
   test("an unknown product shows the 404 page", async ({ page, request }) => {
     await signIn(page, await createAccount(request));
     for (const path of [
-      "/products/unknown",
-      "/products/V1StGXR8_Z5jdHi6B-myT",
+      "/en/products/unknown",
+      "/en/products/V1StGXR8_Z5jdHi6B-myT",
     ]) {
       await page.goto(path);
       await expect(
@@ -86,7 +86,7 @@ test.describe("product reviews", () => {
       ).toBeVisible();
     }
     await page.getByRole("link", { name: "Go to the catalog" }).click();
-    await expect(page).toHaveURL("/home");
+    await expect(page).toHaveURL("/en/home");
   });
 
   test("a product without reviews: empty state and the 3-review threshold", async ({
@@ -112,7 +112,7 @@ test.describe("product reviews", () => {
     const empty = page.getByTestId("reviews-empty");
     await expect(empty).toContainText("No reviews yet");
     await empty.getByRole("link", { name: "Be the first to review" }).click();
-    await expect(page).toHaveURL(`/products/${productId}/feedback`);
+    await expect(page).toHaveURL(`/en/products/${productId}/feedback`);
   });
 
   test("after 3 reviews: slips newest first, numbers, unavailable summary", async ({

@@ -8,6 +8,7 @@ import type {
   ProductSort,
 } from "@/features/products/product.types";
 import { getDb } from "@/server/db";
+import type { Database, Tables } from "@/types/database";
 
 // Lists, search and category counts only return available products: those
 // seen within AVAILABLE_DAYS before the latest import (the most recent
@@ -24,22 +25,30 @@ export const SEARCH_PAGE_SIZE = 24;
 export const MAX_PAGE_SIZE = 60;
 export const MIN_SEARCH_LENGTH = 2;
 
-export type ProductRow = {
-  id: string;
-  asin: string;
-  title: string;
-  url: string;
-  image_url: string;
-  price_cents: number;
-  list_price_cents: number | null;
-  discount_percent: number | null;
-  currency: string;
-  rating: number | string | null;
-  review_count: number | null;
-  category_slug: string;
-  category_name: string;
-  last_seen_at: string;
+// The selected columns of products. The available_products view has the same
+// columns, but views come out all-nullable in the generated types, so rows
+// from it are read with the table's (non-null) types. numeric(2,1) `rating`
+// is also accepted as a string, as some drivers send it.
+export type ProductRow = Omit<ProductColumns, "rating"> & {
+  rating: ProductColumns["rating"] | string;
 };
+type ProductColumns = Pick<
+  Tables<"products">,
+  | "id"
+  | "asin"
+  | "title"
+  | "url"
+  | "image_url"
+  | "price_cents"
+  | "list_price_cents"
+  | "discount_percent"
+  | "currency"
+  | "rating"
+  | "review_count"
+  | "category_slug"
+  | "category_name"
+  | "last_seen_at"
+>;
 
 const COLUMNS =
   "id, asin, title, url, image_url, price_cents, list_price_cents, discount_percent, currency, rating, review_count, category_slug, category_name, last_seen_at";
@@ -167,11 +176,11 @@ async function fetchPage(
   };
 }
 
-type ReviewStatsRow = {
-  product_id: string;
-  review_count: number | string;
-  average: number | string | null;
-};
+// Same shape for product_review_stats() and most_reviewed_products()
+type ReviewStatsRow =
+  Database["public"]["Functions"]["product_review_stats"]["Returns"][number];
+type CategoryRow =
+  Database["public"]["Functions"]["list_product_categories"]["Returns"][number];
 
 /**
  * The app's review count and average for each of the ids, in one call
@@ -281,13 +290,11 @@ export async function listCategories(): Promise<ProductCategory[]> {
   if (error || !data) {
     throw new ProductQueryError("Failed to list categories", { cause: error });
   }
-  return (data as { slug: string; name: string; count: number | string }[]).map(
-    (row) => ({
-      slug: row.slug,
-      name: categoryName(row.slug, row.name),
-      count: Number(row.count),
-    }),
-  );
+  return (data as CategoryRow[]).map((row) => ({
+    slug: row.slug,
+    name: categoryName(row.slug, row.name),
+    count: Number(row.count),
+  }));
 }
 
 export async function listProducts(opts: {

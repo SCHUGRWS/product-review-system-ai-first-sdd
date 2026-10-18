@@ -4,6 +4,10 @@ import type {
   ProductCategory,
   ProductPage,
 } from "@/features/products/product.types";
+import { formatCount } from "@/i18n/format";
+import type { Locale } from "@/i18n/locales";
+import type { T } from "@/i18n/message";
+import { getLocale, getT } from "@/i18n/server";
 import { cn } from "@/lib/utils";
 import {
   listCategories,
@@ -31,9 +35,6 @@ import { ProductRow, RowHeading } from "./product-row";
 export const ROW_SIZE = 20;
 export const GRID_PAGE_SIZE = 24;
 export const TOP_RATED_MIN_REVIEWS = 50;
-
-const LOAD_ERROR =
-  "Could not load these products. Refresh the page to try again.";
 
 // Everything below the search band. Reads the session and the URL, so the
 // page renders it behind <Suspense>; without a session it redirects.
@@ -64,12 +65,13 @@ export async function CatalogView({
   );
 }
 
-function QueryHint({ params }: { params: CatalogParams }) {
+async function QueryHint({ params }: { params: CatalogParams }) {
   if (params.hint !== "query-too-short") return null;
+  const t = await getT();
   return (
     <div className={cn(CONTAINER, "pt-8")}>
       <output className="block text-[1rem] text-slate">
-        Type at least {MIN_QUERY_LENGTH} characters to search.
+        {t("catalog.queryTooShort", { min: MIN_QUERY_LENGTH })}
       </output>
     </div>
   );
@@ -78,6 +80,7 @@ function QueryHint({ params }: { params: CatalogParams }) {
 // Default view: deals by discount, by rating, then one list per category.
 // Each list streams in on its own, so a slow query does not hold the rest.
 export async function ListsView() {
+  const [t, locale] = await Promise.all([getT(), getLocale()]);
   let categories: ProductCategory[];
   try {
     categories = await listCategories();
@@ -107,33 +110,43 @@ export async function ListsView() {
 
   return (
     <div className="py-4 sm:py-6">
-      <Suspense fallback={<ProductRowSkeleton title="Most reviewed here" />}>
+      <Suspense
+        fallback={
+          <ProductRowSkeleton title={t("catalog.mostReviewed.title")} />
+        }
+      >
         <LoadedRow
           id="most-reviewed"
-          title="Most reviewed here"
-          description="Products our community has reviewed the most"
+          title={t("catalog.mostReviewed.title")}
+          description={t("catalog.mostReviewed.description")}
           page={mostReviewed}
           hideWhenEmpty
         />
       </Suspense>
-      <Suspense fallback={<ProductRowSkeleton title="Biggest discounts" />}>
+      <Suspense
+        fallback={<ProductRowSkeleton title={t("catalog.discounts.title")} />}
+      >
         <LoadedRow
           id="discounts"
-          title="Biggest discounts"
-          description="The deepest price cuts in today's deals"
+          title={t("catalog.discounts.title")}
+          description={t("catalog.discounts.description")}
           page={discounts}
         />
       </Suspense>
-      <Suspense fallback={<ProductRowSkeleton title="Top rated" />}>
+      <Suspense
+        fallback={<ProductRowSkeleton title={t("catalog.topRated.title")} />}
+      >
         <LoadedRow
           id="top-rated"
-          title="Top rated"
-          description={`Best Amazon ratings, from at least ${TOP_RATED_MIN_REVIEWS} reviews`}
+          title={t("catalog.topRated.title")}
+          description={t("catalog.topRated.description", {
+            min: TOP_RATED_MIN_REVIEWS,
+          })}
           page={topRated}
         />
       </Suspense>
       {perCategory.map(({ category, products }) => {
-        const label = categoryLabel(category);
+        const label = categoryLabel(t, category);
         return (
           <Suspense
             key={category.slug}
@@ -143,7 +156,7 @@ export async function ListsView() {
               id={`category-${category.slug}`}
               title={label}
               page={products}
-              seeAllHref={catalogHref({ category: category.slug })}
+              seeAllHref={catalogHref(locale, { category: category.slug })}
             />
           </Suspense>
         );
@@ -170,12 +183,13 @@ export async function LoadedRow({
     result = await page;
   } catch (error) {
     console.error(`[LoadedRow] failed to load "${row.title}"`, error);
+    const t = await getT();
     return (
       <section aria-label={row.title} className="py-6 sm:py-8">
         <RowHeading title={row.title} />
         <div className={cn(CONTAINER, "mt-4")}>
           <p role="alert" className="text-[1rem] text-destructive">
-            {LOAD_ERROR}
+            {t("catalog.loadError")}
           </p>
         </div>
       </section>
@@ -194,6 +208,7 @@ export async function CategoryView({
   page: number;
 }) {
   if (!isValidSlug(slug)) return <UnknownCategory />;
+  const [t, locale] = await Promise.all([getT(), getLocale()]);
 
   let categories: ProductCategory[];
   let result: ProductPage;
@@ -214,7 +229,7 @@ export async function CategoryView({
 
   const category = categories.find((c) => c.slug === slug);
   if (!category) return <UnknownCategory />;
-  const label = categoryLabel(category);
+  const label = categoryLabel(t, category);
 
   return (
     <section
@@ -222,27 +237,29 @@ export async function CategoryView({
       className={cn(CONTAINER, "py-10 sm:py-12")}
     >
       <Link
-        href={catalogHref({})}
+        href={catalogHref(locale, {})}
         className={cn(TEXT_LINK, "text-[0.9375rem]")}
       >
-        All products
+        {t("catalog.allProducts")}
       </Link>
       <h2 id="catalog-category" className={cn(SECTION_TITLE, "mt-3")}>
         {label}
       </h2>
       <p className="mt-1 text-[0.9375rem] text-slate">
-        {countLabel(result.total)}, biggest discounts first
+        {t("catalog.categoryCount", {
+          count: countLabel(t, locale, result.total),
+        })}
       </p>
       <GridOrPastEnd
         result={result}
         label={label}
-        firstPageHref={catalogHref({ category: slug })}
+        firstPageHref={catalogHref(locale, { category: slug })}
       />
       <Pagination
         total={result.total}
         page={page}
         pageSize={GRID_PAGE_SIZE}
-        href={(n) => catalogHref({ category: slug, page: n })}
+        href={(n) => catalogHref(locale, { category: slug, page: n })}
       />
     </section>
   );
@@ -250,6 +267,7 @@ export async function CategoryView({
 
 // /home?q=<text>: full-text search over the titles.
 export async function SearchView({ q, page }: { q: string; page: number }) {
+  const [t, locale] = await Promise.all([getT(), getLocale()]);
   let result: ProductPage;
   try {
     result = await searchProducts(q, { page, pageSize: GRID_PAGE_SIZE });
@@ -265,39 +283,44 @@ export async function SearchView({ q, page }: { q: string; page: number }) {
       className={cn(CONTAINER, "py-10 sm:py-12")}
     >
       <h2 id="catalog-results" className={SECTION_TITLE}>
-        Search results
+        {t("catalog.results.title")}
       </h2>
       <output
         aria-live="polite"
         className="mt-1 block text-[0.9375rem] text-slate"
       >
-        {result.total === 1
-          ? `1 result for ${quoted}`
-          : `${result.total} results for ${quoted}`}
+        {t(
+          result.total === 1
+            ? "catalog.results.count.one"
+            : "catalog.results.count.other",
+          { count: formatCount(locale, result.total), query: quoted },
+        )}
       </output>
       {result.total === 0 ? (
         <div className="mt-8">
           <Notice
-            title={`No products match ${quoted}`}
-            action={{ href: catalogHref({}), label: "Clear search" }}
+            title={t("catalog.noMatch.title", { query: quoted })}
+            action={{
+              href: catalogHref(locale, {}),
+              label: t("catalog.search.clear"),
+            }}
             headingLevel={3}
           >
-            Check the spelling, try fewer words, or clear the search to browse
-            the lists.
+            {t("catalog.noMatch.body")}
           </Notice>
         </div>
       ) : (
         <>
           <GridOrPastEnd
             result={result}
-            label={`Results for ${quoted}`}
-            firstPageHref={catalogHref({ q })}
+            label={t("catalog.results.label", { query: quoted })}
+            firstPageHref={catalogHref(locale, { q })}
           />
           <Pagination
             total={result.total}
             page={page}
             pageSize={GRID_PAGE_SIZE}
-            href={(n) => catalogHref({ q, page: n })}
+            href={(n) => catalogHref(locale, { q, page: n })}
           />
         </>
       )}
@@ -305,7 +328,7 @@ export async function SearchView({ q, page }: { q: string; page: number }) {
   );
 }
 
-function GridOrPastEnd({
+async function GridOrPastEnd({
   result,
   label,
   firstPageHref,
@@ -317,47 +340,55 @@ function GridOrPastEnd({
   if (result.items.length > 0) {
     return <ProductGrid products={result.items} label={label} />;
   }
+  const t = await getT();
   if (result.total === 0) {
     return (
       <p className="mt-8 text-[1rem] text-slate">
-        No products here right now. New deals come in every night.
+        {t("catalog.row.emptyHere")}
       </p>
     );
   }
   return (
     <div className="mt-8">
       <Notice
-        title="This page is past the last one"
-        action={{ href: firstPageHref, label: "Go to the first page" }}
+        title={t("catalog.pastEnd.title")}
+        action={{ href: firstPageHref, label: t("catalog.pastEnd.cta") }}
         headingLevel={3}
       />
     </div>
   );
 }
 
-function UnknownCategory() {
+async function UnknownCategory() {
+  const [t, locale] = await Promise.all([getT(), getLocale()]);
   return (
     <div className={cn(CONTAINER, "py-10 sm:py-12")}>
       <Notice
-        title="We could not find that category"
-        action={{ href: catalogHref({}), label: "Browse all products" }}
+        title={t("catalog.unknownCategory.title")}
+        action={{
+          href: catalogHref(locale, {}),
+          label: t("catalog.unknownCategory.cta"),
+        }}
       >
-        It may have no deals right now. The lists show every category that does.
+        {t("catalog.unknownCategory.body")}
       </Notice>
     </div>
   );
 }
 
-function LoadError() {
+async function LoadError() {
+  const t = await getT();
   return (
     <div className={cn(CONTAINER, "py-10 sm:py-12")}>
-      <Notice title="Could not load the catalog" tone="error">
-        {LOAD_ERROR}
+      <Notice title={t("catalog.loadErrorTitle")} tone="error">
+        {t("catalog.loadError")}
       </Notice>
     </div>
   );
 }
 
-function countLabel(total: number) {
-  return total === 1 ? "1 product" : `${total} products`;
+function countLabel(t: T, locale: Locale, total: number) {
+  return t(total === 1 ? "products.count.one" : "products.count.other", {
+    count: formatCount(locale, total),
+  });
 }

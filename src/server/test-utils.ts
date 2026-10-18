@@ -7,6 +7,7 @@ export const testUser: SessionUser = {
   lastName: "Lovelace",
   email: "ada@example.com",
   createdAt: new Date("2026-10-01T12:00:00Z"),
+  locale: "en",
 };
 
 // tRPC context for router tests; pass `user: testUser` for a signed-in caller.

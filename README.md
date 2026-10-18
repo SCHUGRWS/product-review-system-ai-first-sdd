@@ -8,6 +8,8 @@ Stack and components: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 - **Sign-in** ([spec](specs/sign-in.md), [plan](plans/01-sign-in-home-feedback/sign-in.md)): page at `/auth/sign-in`, tRPC `auth.signIn` / `auth.signOut`, REST `POST /api/v1/sign-in` and `POST /api/v1/sign-out`. Sessions last 7 days.
 - **Product** ([spec](specs/product.md), [plan](plans/02-products/product.md)): catalog imported on demand from Amazon Brazil deals by a local n8n workflow (an optional daily schedule is off by default) ([`n8n/`](n8n/README.md)), REST `POST /api/v1/products/import`, tRPC `product.search` / `product.byId`.
 - **Home** ([spec](specs/home.md), plans [01](plans/01-sign-in-home-feedback/home.md) and [02](plans/02-products/home.md)): `/home` is the product catalog ("Most reviewed here" from the app's own reviews, discount, rating and category lists, category pages, search); `/me` is the user's page (account, recent feedback, sign-out).
+- **Study-project disclaimer** ([spec](specs/home.md), requirement 6): a notice on `/` and a footer on every other page say this is a non-profit study project, data is not used for anything else, no emails are sent, and disabled features can be re-enabled by opening a GitHub issue.
+- **Translation** ([spec](specs/i18n.md), [plan](plans/03-product-reviews/i18n.md)): the whole UI in English and Brazilian Portuguese. Every page lives under a locale: `/en/...` or `/pt-BR/...` (`/en/home`, `/pt-BR/products/<id>`); URLs without one (`/`, `/home`, old links) redirect to the `prs_locale` cookie's language, else the browser's, else English. Signed-in users pick the language on `/me` ("Language": English / Português, tRPC `account.setLocale`); it is saved on the account and applied at every sign-in. AI summaries are written in the viewer's language. REST API messages stay English. Paths in this README are shown without the locale.
 - **Feedback** ([spec](specs/feedback.md), plans [01](plans/01-sign-in-home-feedback/feedback.md) and [02](plans/02-products/feedback.md)): review of a catalog product at `/products/<id>/feedback` with a live review slip preview, one per user per product; tRPC `feedback.create` / `feedback.listMine` / `feedback.hasReviewed`, REST `POST /api/v1/feedback`.
 
 ## Requirements
@@ -31,6 +33,24 @@ Fill `PRODUCTS_IMPORT_TOKEN` too (`openssl rand -base64 32`): the n8n workflow u
 After pulling new migrations, apply them without wiping local data:
 ```bash
 supabase migration up --local
+```
+
+## Demo data
+Every database starts with content: the migration `supabase/migrations/20261018210000_demo_data.sql` runs with `supabase db push` / `supabase migration up` (unlike `seed.sql`). It contains:
+- the catalog snapshot: 1,001 products from the Amazon Brazil deals import
+- 67 synthetic `@example.com` accounts (no real user data)
+- 1,064 reviews in Brazilian Portuguese on 196 products (3–12 each, mostly positive, some mixed or negative)
+- cached AI summaries, once they are generated (optional `summaries.json`)
+
+Every insert skips rows that already exist, so it is safe on a database with real data.
+
+**Public demo login:** `demo@example.com` / `demo-review-2026`. The other demo accounts can't sign in: their passwords are random and were discarded.
+
+To regenerate (see [`specs/demo-data.md`](specs/demo-data.md)):
+```bash
+node scripts/demo-data/export-current.mjs   # products + demo-* accounts from the local DB -> JSON
+node scripts/demo-data/generate.mjs         # accounts + reviews (OpenAI gpt-4.1-nano, OPENAI_API_KEY from .env.local); resumable
+node scripts/demo-data/build-migration.mjs  # JSON -> SQL migration (deterministic, no API calls)
 ```
 
 ## Loading products (n8n)
@@ -69,6 +89,7 @@ Import the repository in Vercel, set the two variables above (plus `PRODUCTS_IMP
 
 - **Product images** load straight from `m.media-amazon.com` (`next/image` with `unoptimized`, Amazon's own size variants as `srcSet`), so they never use Vercel Image Optimization or its Hobby quota.
 - **AI summary** circuit breaker: when OpenAI answers with a quota or billing error (`insufficient_quota`, `billing_hard_limit_reached`) or rejects the key (401), the app stops calling the model for `AI_DISABLED_HOURS` (default 6), stored in the `app_flags` table. Cached summaries still show; products without one show "Summary unavailable right now". Timeouts and 5xx errors do not trip it. To turn the AI back on sooner, clear `app_flags.ai_disabled_until`.
+- **AI summary** freshness: after each new feedback the product's summary is regenerated in the background (Next's `after()`, same 10% rule), so visitors read it from the cache. After a seed or an import, fill the missing ones with `pnpm summaries:warm` (see below).
 
 ## Scripts
 | Script | Description |
@@ -83,6 +104,8 @@ Import the repository in Vercel, set the two variables above (plus `PRODUCTS_IMP
 | `pnpm db:reset` | Recreate the local database from migrations |
 | `pnpm db:link` / `pnpm db:push` | Link a hosted project / apply migrations to it |
 | `pnpm db:test` | SQL tests in `supabase/tests` (pgTAP) against the local database, rolled back |
+| `pnpm db:types` | Regenerate `src/types/database.ts` from the local database (`supabase gen types`). Run it after every schema change (new migration), then `pnpm typecheck` |
+| `pnpm summaries:warm` | Fill missing or stale AI summaries through `POST /api/v1/summaries/warm` (app running; token from `.env.local`; `--limit=N`, `--locale=pt-BR`, `--all`; target `APP_URL` from the shell, default `http://localhost:3000`) |
 | `pnpm n8n:up` / `pnpm n8n:down` | Start / stop n8n and Browserless |
 | `pnpm n8n:import` | Import the deals workflow in n8n (unpublished: manual runs only) |
 | `pnpm n8n:schedule:on` / `pnpm n8n:schedule:off` | Publish / unpublish the workflow, turning the daily 00:00 run on / off |
@@ -94,7 +117,7 @@ Import the repository in Vercel, set the two variables above (plus `PRODUCTS_IMP
 - **End-to-end (Playwright):** `e2e/*.spec.ts`. Requires the local database (`pnpm db:start`) with migrations applied and `PRODUCTS_IMPORT_TOKEN` in `.env.local`. Tests seed fixture products through the import endpoint (no Amazon access), and a global teardown deletes the test accounts (`e2e-*@example.com`) and fixture products (`E2E*` ASINs) at the end. The first run may need `pnpm exec playwright install chromium` (and `sudo pnpm exec playwright install-deps chromium` on a bare Linux/WSL).
 
 ## Authentication
-Signing in creates a row in `sessions` and sets the `prs_session` cookie (`HttpOnly`, `SameSite=Lax`, `Secure` in production, 7 days). The cookie holds a random token; the database stores only its SHA-256 hash. Signing out deletes the row and clears the cookie. Server Components read the user with `getCurrentUser()` / `requireUser()` (`src/server/auth/current-user.ts`), and tRPC procedures that need a user use `protectedProcedure`.
+Signing in creates a row in `sessions` and sets the `prs_session` cookie (`HttpOnly`, `SameSite=Lax`, `Secure` in production, 7 days). The cookie holds a random token; the database stores only its SHA-256 hash. Signing out deletes the row and clears the cookie. Sign-in also sets `prs_locale` (the account's language, 1 year), which `src/proxy.ts` uses for URLs without a locale; sign-out keeps it. Server Components read the user with `getCurrentUser()` / `requireUser()` (`src/server/auth/current-user.ts`), and tRPC procedures that need a user use `protectedProcedure`.
 
 ## REST API
 All bodies are JSON. Errors have the shape `{ "error" }`, plus `fields` (field-level messages) on validation errors.
@@ -154,5 +177,14 @@ Used by the n8n workflow. Authenticated by `Authorization: Bearer <PRODUCTS_IMPO
 |---|---|
 | 200 | `{ "received", "saved", "skipped": [{ "index", "reason" }] }`; invalid items are skipped, the rest saved |
 | 400 | Invalid JSON, missing category, or more than 100 products |
+| 401 | Missing or wrong token |
+| 500 | Unexpected server error |
+
+### `POST /api/v1/summaries/warm`
+Generates missing or stale AI summaries (available products with 3+ reviews, most reviewed first, one at a time). Same `Authorization: Bearer <PRODUCTS_IMPORT_TOKEN>` as the import. Optional body: `{ "limit": 50, "locale": "en" }` (`limit` 1–200, `locale` `en` or `pt-BR`). Run it with `pnpm summaries:warm`.
+| Status | Meaning |
+|---|---|
+| 200 | `{ "checked", "generated", "skipped", "failed", "remaining", "stopped" }`; `stopped` is `null`, `"ai-off"` (breaker open or tripped), `"no-key"` or `"time"` (near the 300 s limit) |
+| 400 | Invalid JSON, limit or locale |
 | 401 | Missing or wrong token |
 | 500 | Unexpected server error |

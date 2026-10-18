@@ -9,17 +9,17 @@ import {
 } from "@/features/reviews/reviews.schema";
 import { shortName } from "@/lib/user-name";
 import { getDb } from "@/server/db";
+import type { Tables } from "@/types/database";
 
 // The app's reviews of one catalog product (specs/product-reviews.md). Legacy
 // feedback without a product never matches a product_id, so it is left out.
 
-type ReviewRow = {
-  id: string;
-  rating: number;
-  comment: string;
-  created_at: string;
+type ReviewRow = Pick<
+  Tables<"feedbacks">,
+  "id" | "rating" | "comment" | "created_at"
+> & {
   /** Embedded through feedbacks.account_id */
-  author: { first_name: string; last_name: string } | null;
+  author: Pick<Tables<"accounts">, "first_name" | "last_name"> | null;
 };
 
 const LIST_COLUMNS =
@@ -123,7 +123,10 @@ export async function listProductReviews(
   };
 }
 
-export type SummaryReviewInput = { rating: number; comment: string };
+export type SummaryReviewInput = Pick<
+  Tables<"feedbacks">,
+  "rating" | "comment"
+>;
 
 /** Newest reviews for the AI summary: rating and comment only, no author */
 export async function listReviewsForSummary(

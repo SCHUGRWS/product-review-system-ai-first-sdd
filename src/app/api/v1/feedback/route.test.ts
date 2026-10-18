@@ -20,6 +20,10 @@ vi.mock("@/server/products/queries", async (importOriginal) => ({
 const createContext = vi.hoisted(() => vi.fn());
 vi.mock("@/server/context", () => ({ createContext }));
 
+// The summary refresh runs after the response (after()); collected here
+const runInBackground = vi.hoisted(() => vi.fn());
+vi.mock("@/server/background", () => ({ runInBackground }));
+
 const { POST } = await import("./route");
 
 function request(body: string, { signedIn = true } = {}) {
@@ -69,6 +73,7 @@ describe("POST /api/v1/feedback", () => {
     vi.restoreAllMocks();
     getProductById.mockReset();
     getProductById.mockResolvedValue(product);
+    runInBackground.mockReset();
     createContext.mockReset();
     createContext.mockImplementation(async ({ req }: { req: Request }) =>
       makeContext({ user: req.headers.get("cookie") ? testUser : null }),
@@ -106,6 +111,11 @@ describe("POST /api/v1/feedback", () => {
       product_id: product.id,
       product_name: product.title,
     });
+    // Same procedure as tRPC: the summary refresh is scheduled after() too
+    expect(runInBackground).toHaveBeenCalledWith(
+      "summary refresh",
+      expect.any(Function),
+    );
   });
 
   it("returns 400 for a body that is not JSON", async () => {

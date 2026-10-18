@@ -15,10 +15,10 @@ const WIDTHS = [
 ];
 
 const PUBLIC_PAGES = [
-  "/",
-  "/auth/sign-in",
-  "/auth/sign-up",
-  "/auth/sign-up/success",
+  "/en",
+  "/en/auth/sign-in",
+  "/en/auth/sign-up",
+  "/en/auth/sign-up/success",
 ];
 
 async function expectNoHorizontalScroll(page: Page) {
@@ -140,11 +140,11 @@ for (const size of WIDTHS) {
       expect(reviewsHref).toBeTruthy();
 
       const framed = [
-        { path: "/home", ready: "Biggest discounts" },
-        { path: "/home?q=smart", ready: "Search results" },
-        { path: "/home?category=deals-collection-tvs", ready: "TVs" },
-        { path: "/me", ready: "Your recent feedback" },
-        { path: reviewsHref ?? "/home", ready: "Community reviews" },
+        { path: "/en/home", ready: "Biggest discounts" },
+        { path: "/en/home?q=smart", ready: "Search results" },
+        { path: "/en/home?category=deals-collection-tvs", ready: "TVs" },
+        { path: "/en/me", ready: "Your recent feedback" },
+        { path: reviewsHref ?? "/en/home", ready: "Community reviews" },
       ];
       for (const { path, ready } of framed) {
         await test.step(path, async () => {
@@ -158,7 +158,7 @@ for (const size of WIDTHS) {
       }
 
       await test.step("feedback form", async () => {
-        await page.goto(feedbackHref ?? "/home", {
+        await page.goto(feedbackHref ?? "/en/home", {
           waitUntil: "domcontentloaded",
         });
         await expect(

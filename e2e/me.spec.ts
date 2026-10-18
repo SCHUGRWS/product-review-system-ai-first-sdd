@@ -19,7 +19,7 @@ test.describe("/me", () => {
       lastName: "Lovelace",
     });
     await signIn(page, account);
-    await page.goto("/me");
+    await page.goto("/en/me");
 
     await expect(page).toHaveTitle("My page | Product Review System");
     await expect(
@@ -30,7 +30,7 @@ test.describe("/me", () => {
     await expect(header.getByText("Ada L.", { exact: true })).toBeVisible();
     await expect(
       header.getByRole("link", { name: "Product Review System" }),
-    ).toHaveAttribute("href", "/home");
+    ).toHaveAttribute("href", "/en/home");
 
     const accountSection = page.getByRole("region", { name: "Your account" });
     await expect(accountSection.getByText("Ada Lovelace")).toBeVisible();
@@ -47,7 +47,7 @@ test.describe("/me", () => {
 
     const nav = page.getByRole("navigation", { name: "Main" });
     await nav.getByRole("link", { name: "My page" }).click();
-    await expect(page).toHaveURL("/me");
+    await expect(page).toHaveURL("/en/me");
     await expect(nav.getByRole("link", { name: "My page" })).toHaveAttribute(
       "aria-current",
       "page",
@@ -57,7 +57,7 @@ test.describe("/me", () => {
     ).not.toHaveAttribute("aria-current", "page");
 
     await nav.getByRole("link", { name: "Products" }).click();
-    await expect(page).toHaveURL("/home");
+    await expect(page).toHaveURL("/en/home");
     await expect(nav.getByRole("link", { name: "Products" })).toHaveAttribute(
       "aria-current",
       "page",
@@ -69,27 +69,27 @@ test.describe("/me", () => {
     request,
   }) => {
     await signIn(page, await createAccount(request));
-    await page.goto("/me");
+    await page.goto("/en/me");
 
     await page.getByRole("link", { name: "Write feedback" }).click();
-    await expect(page).toHaveURL("/home?focus=search");
+    await expect(page).toHaveURL("/en/home?focus=search");
     await expect(page.getByLabel("Search products")).toBeFocused();
   });
 
   test('"Sign out" ends the session', async ({ page, request }) => {
     await signIn(page, await createAccount(request));
-    await page.goto("/me");
+    await page.goto("/en/me");
 
     await page.getByRole("button", { name: "Sign out" }).click();
-    await expect(page).toHaveURL("/auth/sign-in");
+    await expect(page).toHaveURL("/en/auth/sign-in");
 
-    await page.goto("/me");
-    await expect(page).toHaveURL("/auth/sign-in");
+    await page.goto("/en/me");
+    await expect(page).toHaveURL("/en/auth/sign-in");
   });
 
   test("redirects anonymous visitors to /auth/sign-in", async ({ page }) => {
-    await page.goto("/me");
-    await expect(page).toHaveURL("/auth/sign-in");
+    await page.goto("/en/me");
+    await expect(page).toHaveURL("/en/auth/sign-in");
   });
 
   test("fits a phone screen without horizontal scroll", async ({
@@ -98,7 +98,7 @@ test.describe("/me", () => {
   }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await signIn(page, await createAccount(request));
-    await page.goto("/me");
+    await page.goto("/en/me");
 
     await expect(
       page.getByRole("heading", { level: 1, name: "Welcome back, Ada" }),

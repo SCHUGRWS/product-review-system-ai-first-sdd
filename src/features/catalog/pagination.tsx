@@ -1,12 +1,13 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
+import { getT } from "@/i18n/server";
 import { cn } from "@/lib/utils";
 import { pageCount, pageLinks } from "./page-links";
 
 const ITEM =
   "inline-flex h-10 min-w-10 items-center justify-center rounded-md px-3 text-[0.9375rem] font-semibold tabular-nums focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cobalt";
 
-export function Pagination({
+export async function Pagination({
   total,
   page,
   pageSize,
@@ -19,15 +20,19 @@ export function Pagination({
 }) {
   const links = pageLinks(total, page, pageSize);
   if (links.length === 0) return null;
+  const t = await getT();
   const last = pageCount(total, pageSize);
 
   return (
-    <nav aria-label="Pagination" className="mt-12 flex justify-center">
+    <nav
+      aria-label={t("pagination.label")}
+      className="mt-12 flex justify-center"
+    >
       <ul className="flex flex-wrap items-center justify-center gap-1.5">
         <li>
           <StepLink
             href={page > 1 ? href(page - 1) : null}
-            label="Previous page"
+            label={t("pagination.previous")}
           >
             <ChevronLeft aria-hidden="true" className="size-4" />
           </StepLink>
@@ -42,7 +47,7 @@ export function Pagination({
               <Link
                 href={href(link.page)}
                 aria-current={link.current ? "page" : undefined}
-                aria-label={`Page ${link.page}`}
+                aria-label={t("pagination.page", { page: link.page })}
                 className={cn(
                   ITEM,
                   link.current
@@ -58,7 +63,7 @@ export function Pagination({
         <li>
           <StepLink
             href={page < last ? href(page + 1) : null}
-            label="Next page"
+            label={t("pagination.next")}
           >
             <ChevronRight aria-hidden="true" className="size-4" />
           </StepLink>

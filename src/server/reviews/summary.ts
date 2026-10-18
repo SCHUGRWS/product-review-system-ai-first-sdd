@@ -5,18 +5,27 @@ import {
   type SummaryLocale,
   type SummaryResult,
 } from "@/features/reviews/summary.schema";
+import { hasLocale } from "@/i18n/locales";
 import { feedbackSummaryModel } from "@/mastra/model";
 import { getDb } from "@/server/db";
+import { getProductById } from "@/server/products/queries";
+import type { Tables } from "@/types/database";
 import {
   aiOutageReason,
   readAiDisabledUntil,
   tripAiBreaker,
 } from "./ai-breaker";
-import { listReviewsForSummary, type SummaryReviewInput } from "./queries";
+import {
+  getProductReviewStats,
+  listReviewsForSummary,
+  type SummaryReviewInput,
+} from "./queries";
 
 // AI summary of a product's reviews, cached per product and language
-// (specs/product-reviews.md, requirements 3 to 5). Server-rendered only: there
-// is no endpoint, so nobody can trigger model calls in a loop.
+// (specs/product-reviews.md, requirements 3 to 5). Generated in the background
+// after each new feedback (refreshSummary, scheduled with after()), by the
+// protected warm-up route, and, as a fallback, while the page renders. No
+// public endpoint triggers a model call, so nobody can run them in a loop.
 
 export const MIN_REVIEWS_FOR_SUMMARY = 3;
 export const MAX_REVIEWS_IN_PROMPT = 50;
@@ -106,11 +115,10 @@ export async function summarizeReviews(
   }
 }
 
-type SummaryRow = {
-  summary: unknown;
-  review_count: number;
-  generated_at: string;
-};
+type SummaryRow = Pick<
+  Tables<"product_feedback_summaries">,
+  "summary" | "review_count" | "generated_at"
+>;
 
 async function readCached(productId: string, locale: SummaryLocale) {
   const { data, error } = await getDb()
@@ -137,6 +145,29 @@ async function readCached(productId: string, locale: SummaryLocale) {
 let missingKeyLogged = false;
 
 /**
+ * What a refresh did:
+ * - generated: a new summary was written to the cache
+ * - fresh: the cached summary is still current (reviews grew less than 10%)
+ * - too-few: fewer than MIN_REVIEWS_FOR_SUMMARY reviews
+ * - not-found: no such product
+ * - no-key: OPENAI_API_KEY is not set
+ * - ai-off: the AI breaker was already open
+ * - tripped: this call hit a quota/billing/key error and opened the breaker
+ * - failed: the model failed (retry later) or the cache write failed
+ */
+export type RefreshOutcome =
+  | "generated"
+  | "fresh"
+  | "too-few"
+  | "not-found"
+  | "no-key"
+  | "ai-off"
+  | "tripped"
+  | "failed";
+
+type Stats = { count: number; average: number | null };
+
+/**
  * The summary to show for a product in a language. Uses the cached one until
  * the reviews grew by 10%; generates (and caches) a new one otherwise. Without
  * OPENAI_API_KEY, while the AI breaker is open, or when the model fails, it
@@ -147,10 +178,57 @@ let missingKeyLogged = false;
 export async function getOrCreateSummary(
   product: { id: string; title: string },
   locale: SummaryLocale,
-  stats: { count: number; average: number | null },
+  stats: Stats,
 ): Promise<SummaryResult> {
+  return (await ensureSummary(product, locale, stats)).result;
+}
+
+/** Languages that already have a cached summary for the product */
+export async function listSummaryLocales(
+  productId: string,
+): Promise<SummaryLocale[]> {
+  const { data, error } = await getDb()
+    .from(TABLE)
+    .select("locale")
+    .eq("product_id", productId);
+  if (error) throw error;
+  return (data ?? [])
+    .map((row) => row.locale)
+    .filter((locale): locale is SummaryLocale => hasLocale(locale));
+}
+
+/**
+ * Generates the product's summary when it is missing or the reviews grew 10%,
+ * with the same rules as the page. Runs outside the request (after() once a
+ * feedback is posted, and the warm-up route); never throws.
+ */
+export async function refreshSummary(
+  productId: string,
+  locale: SummaryLocale,
+): Promise<RefreshOutcome> {
+  try {
+    const [product, stats] = await Promise.all([
+      getProductById(productId),
+      getProductReviewStats(productId),
+    ]);
+    if (!product) return "not-found";
+    return (await ensureSummary(product, locale, stats)).outcome;
+  } catch (error) {
+    console.error("[summary] failed to refresh the summary", error);
+    return "failed";
+  }
+}
+
+async function ensureSummary(
+  product: { id: string; title: string },
+  locale: SummaryLocale,
+  stats: Stats,
+): Promise<{ result: SummaryResult; outcome: RefreshOutcome }> {
   if (stats.count < MIN_REVIEWS_FOR_SUMMARY || stats.average === null) {
-    return { status: "too-few", reviewCount: stats.count };
+    return {
+      result: { status: "too-few", reviewCount: stats.count },
+      outcome: "too-few",
+    };
   }
 
   // The breaker flag is read together with the cache: no extra wait
@@ -162,8 +240,9 @@ export async function getOrCreateSummary(
     readAiDisabledUntil(),
   ]);
   if (cached && !needsRegeneration(cached.reviewCount, stats.count)) {
-    return cached;
+    return { result: cached, outcome: "fresh" };
   }
+  const fallback: SummaryResult = cached ?? { status: "unavailable" };
 
   if (!process.env.OPENAI_API_KEY) {
     if (!missingKeyLogged) {
@@ -172,12 +251,12 @@ export async function getOrCreateSummary(
         "[summary] OPENAI_API_KEY is not set; no summary generated",
       );
     }
-    return cached ?? { status: "unavailable" };
+    return { result: fallback, outcome: "no-key" };
   }
 
   // Breaker open: no model call and no log line until the pause ends
   if (disabledUntil && disabledUntil.getTime() > Date.now()) {
-    return cached ?? { status: "unavailable" };
+    return { result: fallback, outcome: "ai-off" };
   }
 
   let summary: ReviewSummary;
@@ -195,9 +274,12 @@ export async function getOrCreateSummary(
     });
   } catch (error) {
     const outage = aiOutageReason(error);
-    if (outage) await tripAiBreaker(outage);
-    else console.error("[summary] failed to generate the summary", error);
-    return cached ?? { status: "unavailable" };
+    if (outage) {
+      await tripAiBreaker(outage);
+      return { result: fallback, outcome: "tripped" };
+    }
+    console.error("[summary] failed to generate the summary", error);
+    return { result: fallback, outcome: "failed" };
   }
 
   const generatedAt = new Date();
@@ -215,9 +297,7 @@ export async function getOrCreateSummary(
   if (error) console.error("[summary] failed to cache the summary", error);
 
   return {
-    status: "ready",
-    summary,
-    reviewCount: stats.count,
-    generatedAt,
+    result: { status: "ready", summary, reviewCount: stats.count, generatedAt },
+    outcome: error ? "failed" : "generated",
   };
 }

@@ -1,14 +1,18 @@
 import { ProductCardSkeleton } from "@/features/products/product-card-skeleton";
+import { getT } from "@/i18n/server";
 import { cn } from "@/lib/utils";
 import { CONTAINER, ROW_ITEM } from "./layout";
 
 // Placeholder for one list. The title is passed when it is known up front
 // ("Biggest discounts"), so the heading does not move when products arrive.
-export function ProductRowSkeleton({ title }: { title?: string }) {
+export async function ProductRowSkeleton({ title }: { title?: string }) {
+  const t = await getT();
   return (
     <div className="py-6 sm:py-8">
       <output className="sr-only">
-        {title ? `Loading ${title}` : "Loading products"}
+        {title
+          ? t("catalog.loadingList", { title })
+          : t("catalog.loadingProducts")}
       </output>
       <div className={CONTAINER} aria-hidden="true">
         {title ? (
@@ -32,11 +36,12 @@ export function ProductRowSkeleton({ title }: { title?: string }) {
   );
 }
 
-export function ListsSkeleton() {
+export async function ListsSkeleton() {
+  const t = await getT();
   return (
     <>
-      <ProductRowSkeleton title="Biggest discounts" />
-      <ProductRowSkeleton title="Top rated" />
+      <ProductRowSkeleton title={t("catalog.discounts.title")} />
+      <ProductRowSkeleton title={t("catalog.topRated.title")} />
       <ProductRowSkeleton />
     </>
   );

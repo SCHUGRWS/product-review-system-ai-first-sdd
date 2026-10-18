@@ -15,6 +15,21 @@ vi.mock("@/server/products/queries", async (importOriginal) => ({
   getProductById,
 }));
 
+// after() only works inside a Next.js request: the scheduled tasks are
+// collected here and run by the test that needs them.
+const runInBackground = vi.hoisted(() =>
+  vi.fn<(label: string, task: () => Promise<unknown>) => void>(),
+);
+vi.mock("@/server/background", () => ({ runInBackground }));
+const refreshSummary = vi.hoisted(() => vi.fn(async () => "generated"));
+const listSummaryLocales = vi.hoisted(() =>
+  vi.fn(async (): Promise<string[]> => []),
+);
+vi.mock("@/server/reviews/summary", () => ({
+  refreshSummary,
+  listSummaryLocales,
+}));
+
 const { createCaller } = await import("./_app");
 const { makeContext, testUser } = await import("@/server/test-utils");
 
@@ -63,6 +78,9 @@ beforeEach(() => {
   vi.restoreAllMocks();
   getProductById.mockReset();
   getProductById.mockResolvedValue(product);
+  runInBackground.mockReset();
+  refreshSummary.mockClear();
+  listSummaryLocales.mockReset().mockResolvedValue([]);
 });
 
 describe("feedback.create", () => {
@@ -93,6 +111,61 @@ describe("feedback.create", () => {
       comment: "Boils fast and the lid does not drip.",
       createdAt: new Date("2026-10-17T10:00:00Z"),
     });
+  });
+
+  it("schedules the summary refresh in the author's language after the response, not during it", async () => {
+    db.resolveWith({ data: row, error: null });
+
+    await signedIn.feedback.create(input);
+
+    expect(runInBackground).toHaveBeenCalledTimes(1);
+    expect(runInBackground).toHaveBeenCalledWith(
+      "summary refresh",
+      expect.any(Function),
+    );
+    expect(refreshSummary).not.toHaveBeenCalled();
+
+    await runInBackground.mock.calls[0][1]();
+    expect(listSummaryLocales).toHaveBeenCalledWith(product.id);
+    expect(refreshSummary).toHaveBeenCalledTimes(1);
+    expect(refreshSummary).toHaveBeenCalledWith(product.id, "en");
+  });
+
+  it("also refreshes every language that already has a cached summary, once each", async () => {
+    db.resolveWith({ data: row, error: null });
+    listSummaryLocales.mockResolvedValue(["en", "pt-BR"]);
+
+    await signedIn.feedback.create(input);
+    await runInBackground.mock.calls[0][1]();
+
+    expect(refreshSummary.mock.calls).toEqual([
+      [product.id, "en"],
+      [product.id, "pt-BR"],
+    ]);
+  });
+
+  it("refreshes in a Portuguese author's language", async () => {
+    db.resolveWith({ data: row, error: null });
+    const ptAuthor = createCaller(
+      makeContext({ user: { ...testUser, locale: "pt-BR" } }),
+    );
+
+    await ptAuthor.feedback.create(input);
+    await runInBackground.mock.calls[0][1]();
+
+    expect(refreshSummary.mock.calls).toEqual([[product.id, "pt-BR"]]);
+  });
+
+  it("schedules no refresh when the feedback is not created", async () => {
+    db.resolveWith({
+      data: null,
+      error: { code: "23505", message: "duplicate key value" },
+    });
+    await signedIn.feedback.create(input).catch(() => {});
+    getProductById.mockResolvedValue(null);
+    await signedIn.feedback.create(input).catch(() => {});
+
+    expect(runInBackground).not.toHaveBeenCalled();
   });
 
   it("returns NOT_FOUND for an unknown product without inserting", async () => {

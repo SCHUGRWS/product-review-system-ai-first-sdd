@@ -34,12 +34,21 @@ const LABELS: Record<string, string> = {
   "video-games": "Video games",
 };
 
-/** English label for a category slug, or null when the slug is unknown */
-export function categoryLabel(slug: string): string | null {
+/** The known part of a slug ("deals-collection-tvs" -> "tvs"), or null */
+export function categoryKey(slug: string): string | null {
   const key = slug.startsWith(CATEGORY_PREFIX)
     ? slug.slice(CATEGORY_PREFIX.length)
     : slug;
-  return Object.hasOwn(LABELS, key) ? LABELS[key] : null;
+  return Object.hasOwn(LABELS, key) ? key : null;
+}
+
+/** Every known category key; the UI labels are "category.<key>" messages */
+export const CATEGORY_KEYS = Object.keys(LABELS);
+
+/** English label for a category slug, or null when the slug is unknown */
+export function categoryLabel(slug: string): string | null {
+  const key = categoryKey(slug);
+  return key ? LABELS[key] : null;
 }
 
 /** The label when known, otherwise the given fallback (the name sent by n8n) */

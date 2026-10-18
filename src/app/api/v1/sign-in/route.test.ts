@@ -61,6 +61,7 @@ describe("POST /api/v1/sign-in", () => {
       firstName: "Ada",
       lastName: "Lovelace",
       email: "ada@example.com",
+      locale: "en",
     });
     const cookie = response.headers.get("set-cookie");
     expect(cookie).toMatch(/^prs_session=plain-token;/);

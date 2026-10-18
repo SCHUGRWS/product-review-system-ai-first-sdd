@@ -25,21 +25,21 @@ async function openFeedbackPage(
   await expect(page.getByTestId("product-summary")).toContainText(
     product.title,
   );
-  return new URL(page.url()).pathname.split("/")[2];
+  return new URL(page.url()).pathname.split("/")[3];
 }
 
 test.describe("feedback", () => {
   test("/feedback/new now leads to the catalog", async ({ page, request }) => {
     await signIn(page, await createAccount(request));
-    await page.goto("/feedback/new");
-    await expect(page).toHaveURL("/home");
+    await page.goto("/en/feedback/new");
+    await expect(page).toHaveURL("/en/home");
   });
 
   test("anonymous visit to a feedback page redirects to sign-in", async ({
     page,
   }) => {
-    await page.goto("/products/V1StGXR8_Z5jdHi6B-myT/feedback");
-    await expect(page).toHaveURL("/auth/sign-in");
+    await page.goto("/en/products/V1StGXR8_Z5jdHi6B-myT/feedback");
+    await expect(page).toHaveURL("/en/auth/sign-in");
   });
 
   test("an unknown product shows the 404 page with a link to /home", async ({
@@ -47,13 +47,13 @@ test.describe("feedback", () => {
     request,
   }) => {
     await signIn(page, await createAccount(request));
-    await page.goto("/products/unknown/feedback");
+    await page.goto("/en/products/unknown/feedback");
 
     await expect(
       page.getByRole("heading", { level: 1, name: "Product not found" }),
     ).toBeVisible();
     await page.getByRole("link", { name: "Go to the catalog" }).click();
-    await expect(page).toHaveURL("/home");
+    await expect(page).toHaveURL("/en/home");
   });
 
   test("review a catalog product: live slip, post, /me, then blocked", async ({
@@ -97,7 +97,7 @@ test.describe("feedback", () => {
 
     await page.getByRole("button", { name: "Post feedback" }).click();
     await expect(page.getByText("Feedback posted")).toBeVisible();
-    await expect(page).toHaveURL("/me");
+    await expect(page).toHaveURL("/en/me");
 
     // Newest first, with the product image and title
     const first = page
@@ -109,7 +109,7 @@ test.describe("feedback", () => {
     await expect(first.locator("img")).toBeVisible();
 
     // The same product cannot be reviewed twice: page message ...
-    await page.goto(`/products/${productId}/feedback`);
+    await page.goto(`/en/products/${productId}/feedback`);
     await expect(
       page.getByRole("heading", {
         level: 1,
@@ -120,7 +120,7 @@ test.describe("feedback", () => {
       page.getByRole("button", { name: "Post feedback" }),
     ).toHaveCount(0);
     await page.getByRole("link", { name: "See your reviews" }).click();
-    await expect(page).toHaveURL("/me");
+    await expect(page).toHaveURL("/en/me");
 
     // ... and 409 from the API (same session cookie)
     const response = await page.request.post("/api/v1/feedback", {
@@ -176,7 +176,7 @@ test.describe("feedback", () => {
     await page.getByRole("radio", { name: "5 stars" }).check({ force: true });
     await page.getByLabel("Comment").fill(comment);
     await page.getByRole("button", { name: "Post feedback" }).click();
-    await expect(page).toHaveURL("/me");
+    await expect(page).toHaveURL("/en/me");
 
     const first = page
       .getByTestId("recent-feedback")

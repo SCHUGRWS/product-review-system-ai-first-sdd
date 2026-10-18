@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { LOCALES, type Locale } from "@/i18n/locales";
 
 // What the AI summary agent must answer (specs/product-reviews.md, 4.3). The
 // same schema validates the model output and the cached jsonb.
@@ -7,8 +8,9 @@ export const HEADLINE_MAX = 120;
 export const SUMMARY_MAX = 600;
 export const POINTS_MAX = 3;
 
-export const SUMMARY_LOCALES = ["en", "pt-BR"] as const;
-export type SummaryLocale = (typeof SUMMARY_LOCALES)[number];
+// One cached summary per product and UI language
+export const SUMMARY_LOCALES = LOCALES;
+export type SummaryLocale = Locale;
 
 export const reviewSummarySchema = z.object({
   verdict: z

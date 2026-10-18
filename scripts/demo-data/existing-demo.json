@@ -1,0 +1,714 @@
+{
+  "accounts": [
+    {
+      "id": "Sk1inB4_GZoN02WZSfi7U",
+      "first_name": "Ana",
+      "last_name": "Ribeiro",
+      "email": "demo-ana@example.com",
+      "password": null,
+      "salt": null,
+      "active": true,
+      "created_at": "2026-10-18T00:25:52.390799+00:00"
+    },
+    {
+      "id": "xIdUWx-ijNfsaCvHQqkFP",
+      "first_name": "Bruno",
+      "last_name": "Costa",
+      "email": "demo-bruno@example.com",
+      "password": null,
+      "salt": null,
+      "active": true,
+      "created_at": "2026-10-18T00:25:53.062821+00:00"
+    },
+    {
+      "id": "2ae66R2NtCAjDX5RfESzJ",
+      "first_name": "Carla",
+      "last_name": "Mendes",
+      "email": "demo-carla@example.com",
+      "password": null,
+      "salt": null,
+      "active": true,
+      "created_at": "2026-10-18T00:25:53.717151+00:00"
+    },
+    {
+      "id": "4USSAwFpj64oYfeLw6lQa",
+      "first_name": "Diego",
+      "last_name": "Almeida",
+      "email": "demo-diego@example.com",
+      "password": null,
+      "salt": null,
+      "active": true,
+      "created_at": "2026-10-18T00:25:54.351846+00:00"
+    },
+    {
+      "id": "woGKVafGt7q5WVIK15h19",
+      "first_name": "Elisa",
+      "last_name": "Souza",
+      "email": "demo-elisa@example.com",
+      "password": null,
+      "salt": null,
+      "active": true,
+      "created_at": "2026-10-18T00:25:54.967127+00:00"
+    },
+    {
+      "id": "cHtDPOAcPoTPqI3WCz_f0",
+      "first_name": "Felipe",
+      "last_name": "Nunes",
+      "email": "demo-felipe@example.com",
+      "password": null,
+      "salt": null,
+      "active": true,
+      "created_at": "2026-10-18T00:25:55.530023+00:00"
+    }
+  ],
+  "feedbacks": [
+    {
+      "id": "cOtd2XFh1_Tvd4ktAuojP",
+      "account_id": "Sk1inB4_GZoN02WZSfi7U",
+      "product_id": "aPBjD93dDN2Dr-1VNVFc1",
+      "product_name": "Kit Limpeza Automotivo Shampoo V-Floc Cera Carnauba Tok Final Limpador Sintra Fast Renovador Plástico Intense Acessórios Yamase",
+      "rating": 5,
+      "comment": "Kit completo e rende muito. O shampoo V-Floc faz bastante espuma e a cera deixou o carro brilhando por umas três semanas.",
+      "created_at": "2026-10-18T00:25:56.074726+00:00"
+    },
+    {
+      "id": "lNm6cDdbwTUJNVpTXMWzh",
+      "account_id": "xIdUWx-ijNfsaCvHQqkFP",
+      "product_id": "aPBjD93dDN2Dr-1VNVFc1",
+      "product_name": "Kit Limpeza Automotivo Shampoo V-Floc Cera Carnauba Tok Final Limpador Sintra Fast Renovador Plástico Intense Acessórios Yamase",
+      "rating": 4,
+      "comment": "Bom custo-benefício. Só achei o renovador de plásticos meio oleoso, precisa tirar o excesso com pano seco.",
+      "created_at": "2026-10-18T00:25:56.11667+00:00"
+    },
+    {
+      "id": "JYm0-nn31uXp78sFReJkE",
+      "account_id": "2ae66R2NtCAjDX5RfESzJ",
+      "product_id": "aPBjD93dDN2Dr-1VNVFc1",
+      "product_name": "Kit Limpeza Automotivo Shampoo V-Floc Cera Carnauba Tok Final Limpador Sintra Fast Renovador Plástico Intense Acessórios Yamase",
+      "rating": 5,
+      "comment": "Comprei para lavar o carro em casa e não volto mais para lava-rápido. Cheiro agradável e fácil de usar.",
+      "created_at": "2026-10-18T00:25:56.160753+00:00"
+    },
+    {
+      "id": "7nvZ08rFLKr6NJGPqqqej",
+      "account_id": "4USSAwFpj64oYfeLw6lQa",
+      "product_id": "aPBjD93dDN2Dr-1VNVFc1",
+      "product_name": "Kit Limpeza Automotivo Shampoo V-Floc Cera Carnauba Tok Final Limpador Sintra Fast Renovador Plástico Intense Acessórios Yamase",
+      "rating": 3,
+      "comment": "Os produtos são bons, mas a embalagem chegou com o limpador vazando um pouco. A cera é o destaque do kit.",
+      "created_at": "2026-10-18T00:25:56.1995+00:00"
+    },
+    {
+      "id": "TFP5FS_j2CFd541q2i8PJ",
+      "account_id": "woGKVafGt7q5WVIK15h19",
+      "product_id": "McJ1X9bf5PBQq6sNSF1c-",
+      "product_name": "Kit Limpeza Hidratação Couro Vonixx Limpa e Hidrata Bancos Jaquetas Acessórios",
+      "rating": 5,
+      "comment": "Usei nos bancos de couro do carro e numa jaqueta antiga, ficaram macios e sem aquele aspecto ressecado.",
+      "created_at": "2026-10-18T00:25:56.244599+00:00"
+    },
+    {
+      "id": "lGgRwLkomrmW3wsOL1UFU",
+      "account_id": "cHtDPOAcPoTPqI3WCz_f0",
+      "product_id": "McJ1X9bf5PBQq6sNSF1c-",
+      "product_name": "Kit Limpeza Hidratação Couro Vonixx Limpa e Hidrata Bancos Jaquetas Acessórios",
+      "rating": 4,
+      "comment": "Limpa bem sem manchar. O hidratante demora um pouco para secar, recomendo deixar o carro aberto.",
+      "created_at": "2026-10-18T00:25:56.282654+00:00"
+    },
+    {
+      "id": "YHK3elahcqCPn6FXIxLn0",
+      "account_id": "Sk1inB4_GZoN02WZSfi7U",
+      "product_id": "McJ1X9bf5PBQq6sNSF1c-",
+      "product_name": "Kit Limpeza Hidratação Couro Vonixx Limpa e Hidrata Bancos Jaquetas Acessórios",
+      "rating": 5,
+      "comment": "Melhor kit de couro que já usei. Pouca quantidade resolve, vai durar muito tempo.",
+      "created_at": "2026-10-18T00:25:56.314632+00:00"
+    },
+    {
+      "id": "IK858eIlON8DkLbq2-Fh4",
+      "account_id": "xIdUWx-ijNfsaCvHQqkFP",
+      "product_id": "GCG-2RDte5Jxpdsfz9CBM",
+      "product_name": "Carregador Portátil para Carro Elétrico, 7,6KW 32A 85-264V Tipo 2, Cabo 5M, Carregamento Interno/Externo, Carregador EV Tipo 2 para Carros",
+      "rating": 2,
+      "comment": "Carrega, mas esquenta bastante na tomada comum. Precisei instalar um circuito dedicado para usar com segurança.",
+      "created_at": "2026-10-18T00:25:56.351449+00:00"
+    },
+    {
+      "id": "HrfRxAEEW6wCRx2CuqxCD",
+      "account_id": "2ae66R2NtCAjDX5RfESzJ",
+      "product_id": "GCG-2RDte5Jxpdsfz9CBM",
+      "product_name": "Carregador Portátil para Carro Elétrico, 7,6KW 32A 85-264V Tipo 2, Cabo 5M, Carregamento Interno/Externo, Carregador EV Tipo 2 para Carros",
+      "rating": 4,
+      "comment": "Funciona bem na tomada 220V da garagem, o display mostra a corrente certinho. O cabo de 5 metros ajuda muito.",
+      "created_at": "2026-10-18T00:25:56.380689+00:00"
+    },
+    {
+      "id": "pJ9JawbOCvIEYRVcBRJto",
+      "account_id": "4USSAwFpj64oYfeLw6lQa",
+      "product_id": "GCG-2RDte5Jxpdsfz9CBM",
+      "product_name": "Carregador Portátil para Carro Elétrico, 7,6KW 32A 85-264V Tipo 2, Cabo 5M, Carregamento Interno/Externo, Carregador EV Tipo 2 para Carros",
+      "rating": 3,
+      "comment": "Cumpre o que promete, mas o manual é muito ruim e a configuração de amperagem não é intuitiva.",
+      "created_at": "2026-10-18T00:25:56.414157+00:00"
+    },
+    {
+      "id": "V74W6vYuFzB1R4K7YayrV",
+      "account_id": "woGKVafGt7q5WVIK15h19",
+      "product_id": "GCG-2RDte5Jxpdsfz9CBM",
+      "product_name": "Carregador Portátil para Carro Elétrico, 7,6KW 32A 85-264V Tipo 2, Cabo 5M, Carregamento Interno/Externo, Carregador EV Tipo 2 para Carros",
+      "rating": 2,
+      "comment": "Depois de dois meses o conector começou a dar mau contato. Assistência demorou para responder.",
+      "created_at": "2026-10-18T00:25:56.454759+00:00"
+    },
+    {
+      "id": "peLOtTZmcOjQQFPN2XSwG",
+      "account_id": "cHtDPOAcPoTPqI3WCz_f0",
+      "product_id": "9a2o0gL6_lGL96fYxNzAA",
+      "product_name": "Granado Sabonete Líquido Bebê, Calêndula, 250ml",
+      "rating": 5,
+      "comment": "Cheiro suave de calêndula e não resseca a pele do bebê. Uso desde o nascimento sem nenhuma irritação.",
+      "created_at": "2026-10-18T00:25:56.556107+00:00"
+    },
+    {
+      "id": "__-7pUwsNlDBNc42a2wzB",
+      "account_id": "Sk1inB4_GZoN02WZSfi7U",
+      "product_id": "9a2o0gL6_lGL96fYxNzAA",
+      "product_name": "Granado Sabonete Líquido Bebê, Calêndula, 250ml",
+      "rating": 5,
+      "comment": "Clássico da Granado. Rende bastante e a válvula não entope.",
+      "created_at": "2026-10-18T00:25:56.586939+00:00"
+    },
+    {
+      "id": "sal_tcrLLkDRf8k_dbdGa",
+      "account_id": "2ae66R2NtCAjDX5RfESzJ",
+      "product_id": "9a2o0gL6_lGL96fYxNzAA",
+      "product_name": "Granado Sabonete Líquido Bebê, Calêndula, 250ml",
+      "rating": 4,
+      "comment": "Ótimo sabonete, só queria que viesse em embalagem maior para refil.",
+      "created_at": "2026-10-18T00:25:56.625749+00:00"
+    },
+    {
+      "id": "0YMl91KvALBhQ3066zVAz",
+      "account_id": "xIdUWx-ijNfsaCvHQqkFP",
+      "product_id": "RyV0jcZBBEIDi0Nv-mxl_",
+      "product_name": "Kit Primeiros Passos - Lillo, Rosa, Vários volumes",
+      "rating": 5,
+      "comment": "Copos e talheres de ótima qualidade, livres de BPA. Meu filho se adaptou rápido ao copo de transição.",
+      "created_at": "2026-10-18T00:25:56.657314+00:00"
+    },
+    {
+      "id": "Gds4Uf5L8oM7AmlU-cQPP",
+      "account_id": "4USSAwFpj64oYfeLw6lQa",
+      "product_id": "RyV0jcZBBEIDi0Nv-mxl_",
+      "product_name": "Kit Primeiros Passos - Lillo, Rosa, Vários volumes",
+      "rating": 4,
+      "comment": "Kit bonito e útil. O prato com ventosa poderia grudar melhor na mesa.",
+      "created_at": "2026-10-18T00:25:56.683156+00:00"
+    },
+    {
+      "id": "AocEgJ4D1wyMdKbJ4wwPK",
+      "account_id": "woGKVafGt7q5WVIK15h19",
+      "product_id": "RyV0jcZBBEIDi0Nv-mxl_",
+      "product_name": "Kit Primeiros Passos - Lillo, Rosa, Vários volumes",
+      "rating": 3,
+      "comment": "Bom para começar a introdução alimentar, mas a colher é dura demais para a gengiva do bebê.",
+      "created_at": "2026-10-18T00:25:56.716526+00:00"
+    },
+    {
+      "id": "WY10z-qEa5-ncxWJUi3nH",
+      "account_id": "cHtDPOAcPoTPqI3WCz_f0",
+      "product_id": "RyV0jcZBBEIDi0Nv-mxl_",
+      "product_name": "Kit Primeiros Passos - Lillo, Rosa, Vários volumes",
+      "rating": 4,
+      "comment": "Fácil de lavar e cabe na lava-louças. A cor rosa é exatamente como na foto.",
+      "created_at": "2026-10-18T00:25:56.755695+00:00"
+    },
+    {
+      "id": "fZrBZpLyHJYF9jBrqM6K6",
+      "account_id": "Sk1inB4_GZoN02WZSfi7U",
+      "product_id": "hhZ3fvALT4ITo394ZEeXW",
+      "product_name": "Bomba Manual Coletora de Leite Lillo Mamy",
+      "rating": 4,
+      "comment": "Funciona bem para extrações rápidas e é silenciosa, ótimo para usar à noite. Cansa um pouco a mão.",
+      "created_at": "2026-10-18T00:25:56.79073+00:00"
+    },
+    {
+      "id": "6un0gn0M1G_aG-cSUF-Km",
+      "account_id": "2ae66R2NtCAjDX5RfESzJ",
+      "product_id": "hhZ3fvALT4ITo394ZEeXW",
+      "product_name": "Bomba Manual Coletora de Leite Lillo Mamy",
+      "rating": 2,
+      "comment": "Achei a sucção fraca, demorava muito para tirar pouco leite. Acabei comprando uma elétrica.",
+      "created_at": "2026-10-18T00:25:56.82841+00:00"
+    },
+    {
+      "id": "BTi_4Yz8SmHvSmRYfaOiP",
+      "account_id": "woGKVafGt7q5WVIK15h19",
+      "product_id": "hhZ3fvALT4ITo394ZEeXW",
+      "product_name": "Bomba Manual Coletora de Leite Lillo Mamy",
+      "rating": 4,
+      "comment": "Prática para levar no trabalho e fácil de higienizar. Peças encaixam bem.",
+      "created_at": "2026-10-18T00:25:56.857299+00:00"
+    },
+    {
+      "id": "1J-obB6AnNlycLVDtPGM1",
+      "account_id": "xIdUWx-ijNfsaCvHQqkFP",
+      "product_id": "_ABgnGpnkbRKYur-U22Ay",
+      "product_name": "Batom Líquido Maybelline SuperStay Matte Ink, Cor 65, 5ml | Seductress Nude Bege, Longa Duração 16H, Aplicador Preciso, Não Transfere",
+      "rating": 5,
+      "comment": "Comprei para minha esposa e ela amou: dura o dia inteiro, até depois de comer, e a cor nude é linda.",
+      "created_at": "2026-10-18T00:25:56.882271+00:00"
+    },
+    {
+      "id": "qgLdDTcx9tj_7A5X3U3Hr",
+      "account_id": "4USSAwFpj64oYfeLw6lQa",
+      "product_id": "_ABgnGpnkbRKYur-U22Ay",
+      "product_name": "Batom Líquido Maybelline SuperStay Matte Ink, Cor 65, 5ml | Seductress Nude Bege, Longa Duração 16H, Aplicador Preciso, Não Transfere",
+      "rating": 4,
+      "comment": "Dura muito mesmo, mas resseca um pouco os lábios. Vale passar um hidratante antes.",
+      "created_at": "2026-10-18T00:25:56.924659+00:00"
+    },
+    {
+      "id": "F5AS7z2mvQMysoRpG5-0k",
+      "account_id": "cHtDPOAcPoTPqI3WCz_f0",
+      "product_id": "_ABgnGpnkbRKYur-U22Ay",
+      "product_name": "Batom Líquido Maybelline SuperStay Matte Ink, Cor 65, 5ml | Seductress Nude Bege, Longa Duração 16H, Aplicador Preciso, Não Transfere",
+      "rating": 5,
+      "comment": "Não transfere para a máscara nem para o copo. Melhor batom líquido nessa faixa de preço.",
+      "created_at": "2026-10-18T00:25:56.95522+00:00"
+    },
+    {
+      "id": "vtfmFRSWdbuHd32-Ebocw",
+      "account_id": "Sk1inB4_GZoN02WZSfi7U",
+      "product_id": "_ABgnGpnkbRKYur-U22Ay",
+      "product_name": "Batom Líquido Maybelline SuperStay Matte Ink, Cor 65, 5ml | Seductress Nude Bege, Longa Duração 16H, Aplicador Preciso, Não Transfere",
+      "rating": 3,
+      "comment": "A fixação é excelente, mas para remover só com demaquilante bifásico.",
+      "created_at": "2026-10-18T00:25:56.993274+00:00"
+    },
+    {
+      "id": "d-oq1ambJDxmwKHI6cTTd",
+      "account_id": "2ae66R2NtCAjDX5RfESzJ",
+      "product_id": "J8GkSpWr7O1O4-CgSfzZO",
+      "product_name": "Máscara de Cílios Maybelline NY The Colossal Volum' Express, 8ml | 9x mais volume, efeito instantâneo, definição intensa, não empelota, remove com facilidade",
+      "rating": 4,
+      "comment": "Dá bastante volume logo na primeira camada. Borra um pouco no fim do dia se estiver calor.",
+      "created_at": "2026-10-18T00:25:57.035011+00:00"
+    },
+    {
+      "id": "ZS49Ba97UaYsCKCPKr-b0",
+      "account_id": "woGKVafGt7q5WVIK15h19",
+      "product_id": "J8GkSpWr7O1O4-CgSfzZO",
+      "product_name": "Máscara de Cílios Maybelline NY The Colossal Volum' Express, 8ml | 9x mais volume, efeito instantâneo, definição intensa, não empelota, remove com facilidade",
+      "rating": 5,
+      "comment": "Uso há anos, não empelota e o preço em promoção compensa muito.",
+      "created_at": "2026-10-18T00:25:57.070261+00:00"
+    },
+    {
+      "id": "S9C6Ja7aSDoPHIxGWGz-0",
+      "account_id": "Sk1inB4_GZoN02WZSfi7U",
+      "product_id": "J8GkSpWr7O1O4-CgSfzZO",
+      "product_name": "Máscara de Cílios Maybelline NY The Colossal Volum' Express, 8ml | 9x mais volume, efeito instantâneo, definição intensa, não empelota, remove com facilidade",
+      "rating": 3,
+      "comment": "Volume bom, mas a escova é grande demais para os cílios de baixo.",
+      "created_at": "2026-10-18T00:25:57.125789+00:00"
+    },
+    {
+      "id": "AK4yp_LBIUWU-SOocuNVI",
+      "account_id": "cHtDPOAcPoTPqI3WCz_f0",
+      "product_id": "KiADurTMLoQsiIaY5mabi",
+      "product_name": "Maybelline Ny Máscara de Cílios Lash Sensational Sky High À Prova D'Água, Preto 6 ml",
+      "rating": 5,
+      "comment": "Alonga muito e é realmente à prova d'água: aguentou um dia de praia sem borrar.",
+      "created_at": "2026-10-18T00:25:57.155041+00:00"
+    },
+    {
+      "id": "FQfe4v-zzF130OdhT0z1X",
+      "account_id": "xIdUWx-ijNfsaCvHQqkFP",
+      "product_id": "KiADurTMLoQsiIaY5mabi",
+      "product_name": "Maybelline Ny Máscara de Cílios Lash Sensational Sky High À Prova D'Água, Preto 6 ml",
+      "rating": 5,
+      "comment": "Presente para minha irmã, ela disse que é a melhor máscara que já usou.",
+      "created_at": "2026-10-18T00:25:57.182698+00:00"
+    },
+    {
+      "id": "e9vbGFzDkzpusPYQvnoOp",
+      "account_id": "4USSAwFpj64oYfeLw6lQa",
+      "product_id": "KiADurTMLoQsiIaY5mabi",
+      "product_name": "Maybelline Ny Máscara de Cílios Lash Sensational Sky High À Prova D'Água, Preto 6 ml",
+      "rating": 4,
+      "comment": "Excelente efeito de alongamento. Só é difícil de remover, precisa de demaquilante próprio.",
+      "created_at": "2026-10-18T00:25:57.208734+00:00"
+    },
+    {
+      "id": "LRZ7OUbiGehDCSiHS60Gk",
+      "account_id": "2ae66R2NtCAjDX5RfESzJ",
+      "product_id": "KiADurTMLoQsiIaY5mabi",
+      "product_name": "Maybelline Ny Máscara de Cílios Lash Sensational Sky High À Prova D'Água, Preto 6 ml",
+      "rating": 5,
+      "comment": "Escova flexível que pega até os cílios menores. Não pesa e não cai durante o dia.",
+      "created_at": "2026-10-18T00:25:57.247597+00:00"
+    },
+    {
+      "id": "NbdDXJHyE5Yd2nPbffZYW",
+      "account_id": "Sk1inB4_GZoN02WZSfi7U",
+      "product_id": "rEIB4eWPjmJsJilVx1QfH",
+      "product_name": "À Deriva com você",
+      "rating": 5,
+      "comment": "Romance leve e gostoso de ler, terminei em dois dias. Os personagens são carismáticos.",
+      "created_at": "2026-10-18T00:25:57.27481+00:00"
+    },
+    {
+      "id": "XQpaqgfgX_TpwXRyFI_DO",
+      "account_id": "woGKVafGt7q5WVIK15h19",
+      "product_id": "rEIB4eWPjmJsJilVx1QfH",
+      "product_name": "À Deriva com você",
+      "rating": 3,
+      "comment": "Bonitinho, mas previsível. Os capítulos do meio arrastam um pouco.",
+      "created_at": "2026-10-18T00:25:57.316131+00:00"
+    },
+    {
+      "id": "3b9unSiwYPeqNaoWjknvj",
+      "account_id": "xIdUWx-ijNfsaCvHQqkFP",
+      "product_id": "rEIB4eWPjmJsJilVx1QfH",
+      "product_name": "À Deriva com você",
+      "rating": 4,
+      "comment": "Boa leitura para as férias. A edição tem capa linda e papel de qualidade.",
+      "created_at": "2026-10-18T00:25:57.351014+00:00"
+    },
+    {
+      "id": "gZPqxg7m2eTRtX5GHD538",
+      "account_id": "2ae66R2NtCAjDX5RfESzJ",
+      "product_id": "NqbN_w1HRJHHxTjVRiugg",
+      "product_name": "Alchemised: Edição especial (capa dura + pintura trilateral)",
+      "rating": 5,
+      "comment": "Edição especial maravilhosa: capa dura, pintura trilateral e acabamento impecável. A história é densa e envolvente.",
+      "created_at": "2026-10-18T00:25:57.380744+00:00"
+    },
+    {
+      "id": "kaMixPvHxpCKF_jhzePJu",
+      "account_id": "4USSAwFpj64oYfeLw6lQa",
+      "product_id": "NqbN_w1HRJHHxTjVRiugg",
+      "product_name": "Alchemised: Edição especial (capa dura + pintura trilateral)",
+      "rating": 5,
+      "comment": "Fantasia sombria muito bem construída. Vale cada centavo pela edição de colecionador.",
+      "created_at": "2026-10-18T00:25:57.428173+00:00"
+    },
+    {
+      "id": "MLUZ6Qvi7gVpux_TA9n96",
+      "account_id": "cHtDPOAcPoTPqI3WCz_f0",
+      "product_id": "NqbN_w1HRJHHxTjVRiugg",
+      "product_name": "Alchemised: Edição especial (capa dura + pintura trilateral)",
+      "rating": 4,
+      "comment": "Livro lindíssimo. O começo é lento, mas depois da metade não dá para largar.",
+      "created_at": "2026-10-18T00:25:57.461586+00:00"
+    },
+    {
+      "id": "A3Nsynv81SUfb-sFR7o3G",
+      "account_id": "Sk1inB4_GZoN02WZSfi7U",
+      "product_id": "NqbN_w1HRJHHxTjVRiugg",
+      "product_name": "Alchemised: Edição especial (capa dura + pintura trilateral)",
+      "rating": 2,
+      "comment": "A edição é bonita, mas a tradução tem vários erros de revisão que atrapalham a leitura.",
+      "created_at": "2026-10-18T00:25:57.500832+00:00"
+    },
+    {
+      "id": "ucFQPnWrcE8WszzrGzvJV",
+      "account_id": "woGKVafGt7q5WVIK15h19",
+      "product_id": "NqbN_w1HRJHHxTjVRiugg",
+      "product_name": "Alchemised: Edição especial (capa dura + pintura trilateral)",
+      "rating": 4,
+      "comment": "Chegou sem nenhum amassado, embalado em caixa reforçada. História pesada, não é para todo mundo.",
+      "created_at": "2026-10-18T00:25:57.551477+00:00"
+    },
+    {
+      "id": "Ozed9-N2jX1VbN5kN9Epj",
+      "account_id": "xIdUWx-ijNfsaCvHQqkFP",
+      "product_id": "yZMJ04NFzoCbnMWG9bk1-",
+      "product_name": "A Loja dos Sonhos",
+      "rating": 5,
+      "comment": "Que livro delicado! A ideia de comprar e vender sonhos é original e o final emociona.",
+      "created_at": "2026-10-18T00:25:57.580633+00:00"
+    },
+    {
+      "id": "l2qCKCqQ02HME44-2mYbW",
+      "account_id": "2ae66R2NtCAjDX5RfESzJ",
+      "product_id": "yZMJ04NFzoCbnMWG9bk1-",
+      "product_name": "A Loja dos Sonhos",
+      "rating": 4,
+      "comment": "Leitura reconfortante, ótima para antes de dormir. Alguns personagens poderiam ser mais desenvolvidos.",
+      "created_at": "2026-10-18T00:25:57.614906+00:00"
+    },
+    {
+      "id": "138e4nAyonf_2L_KsVTq_",
+      "account_id": "cHtDPOAcPoTPqI3WCz_f0",
+      "product_id": "yZMJ04NFzoCbnMWG9bk1-",
+      "product_name": "A Loja dos Sonhos",
+      "rating": 5,
+      "comment": "Recomendo muito. Daqueles livros que deixam um quentinho no coração.",
+      "created_at": "2026-10-18T00:25:57.677231+00:00"
+    },
+    {
+      "id": "VF-FfxOJCfohKYuYKyA9s",
+      "account_id": "4USSAwFpj64oYfeLw6lQa",
+      "product_id": "CLEPWihdPiLxgL2RMiQ3i",
+      "product_name": "Anker Cabo USB-C para USB-C, 2 Unidades, 1,8m | Carregamento Rápido Type-C 60W para iPhone 18/17/16/15, Samsung, Xiaomi, Motorola, iPad, Tablet, Macbook e Mais, Kindle,Preto",
+      "rating": 5,
+      "comment": "Cabos resistentes e carregam rápido o notebook e o celular. Duas unidades pelo preço de uma é ótimo.",
+      "created_at": "2026-10-18T00:25:57.704701+00:00"
+    },
+    {
+      "id": "PiahGjehyH0-PAiIU44JV",
+      "account_id": "woGKVafGt7q5WVIK15h19",
+      "product_id": "CLEPWihdPiLxgL2RMiQ3i",
+      "product_name": "Anker Cabo USB-C para USB-C, 2 Unidades, 1,8m | Carregamento Rápido Type-C 60W para iPhone 18/17/16/15, Samsung, Xiaomi, Motorola, iPad, Tablet, Macbook e Mais, Kindle,Preto",
+      "rating": 5,
+      "comment": "Anker nunca decepciona. Revestimento firme e 1,8 m é o tamanho ideal.",
+      "created_at": "2026-10-18T00:25:57.768639+00:00"
+    },
+    {
+      "id": "a0guUAGjT4iieQYPeqWQq",
+      "account_id": "Sk1inB4_GZoN02WZSfi7U",
+      "product_id": "CLEPWihdPiLxgL2RMiQ3i",
+      "product_name": "Anker Cabo USB-C para USB-C, 2 Unidades, 1,8m | Carregamento Rápido Type-C 60W para iPhone 18/17/16/15, Samsung, Xiaomi, Motorola, iPad, Tablet, Macbook e Mais, Kindle,Preto",
+      "rating": 4,
+      "comment": "Funcionam perfeitamente, mas não transmitem vídeo para monitor, só carga e dados.",
+      "created_at": "2026-10-18T00:25:57.809495+00:00"
+    },
+    {
+      "id": "KsKfKmgrJ5KtlfV44MRcO",
+      "account_id": "xIdUWx-ijNfsaCvHQqkFP",
+      "product_id": "CLEPWihdPiLxgL2RMiQ3i",
+      "product_name": "Anker Cabo USB-C para USB-C, 2 Unidades, 1,8m | Carregamento Rápido Type-C 60W para iPhone 18/17/16/15, Samsung, Xiaomi, Motorola, iPad, Tablet, Macbook e Mais, Kindle,Preto",
+      "rating": 5,
+      "comment": "Uso no carro e na mesa do escritório há meses sem nenhum problema.",
+      "created_at": "2026-10-18T00:25:57.8551+00:00"
+    },
+    {
+      "id": "4QMQCFlmp0lVUu_tY-A9k",
+      "account_id": "2ae66R2NtCAjDX5RfESzJ",
+      "product_id": "hM4yPufXnNvVpznM1BcD2",
+      "product_name": "Mochila Lenovo Casual B210 Preta para Notebook 15,6\" - GX40Q17225",
+      "rating": 4,
+      "comment": "Cabe o notebook de 15,6 polegadas com folga e tem bons compartimentos. Alças confortáveis.",
+      "created_at": "2026-10-18T00:25:57.888122+00:00"
+    },
+    {
+      "id": "x-HJKUZYHfwL5rCuShPV_",
+      "account_id": "cHtDPOAcPoTPqI3WCz_f0",
+      "product_id": "hM4yPufXnNvVpznM1BcD2",
+      "product_name": "Mochila Lenovo Casual B210 Preta para Notebook 15,6\" - GX40Q17225",
+      "rating": 3,
+      "comment": "Bonita e leve, mas o tecido não é impermeável. Peguei chuva e molhou um pouco o interior.",
+      "created_at": "2026-10-18T00:25:57.936602+00:00"
+    },
+    {
+      "id": "JqoC4Akk6obkt3H282nKU",
+      "account_id": "4USSAwFpj64oYfeLw6lQa",
+      "product_id": "hM4yPufXnNvVpznM1BcD2",
+      "product_name": "Mochila Lenovo Casual B210 Preta para Notebook 15,6\" - GX40Q17225",
+      "rating": 4,
+      "comment": "Ótima para o dia a dia de faculdade. Pelo preço, não tem do que reclamar.",
+      "created_at": "2026-10-18T00:25:57.980677+00:00"
+    },
+    {
+      "id": "AZJA39Kgz5kN4bA5sIsU7",
+      "account_id": "xIdUWx-ijNfsaCvHQqkFP",
+      "product_id": "5gqv2GsTzdx8YphoJ29zJ",
+      "product_name": "Havit HV-H2002d Fone de Ouvido Gamer com Microfone, Prata | Falante 53mm, Plug 3,5mm, Compatível com XBOX ONE, Compatível com PS4",
+      "rating": 3,
+      "comment": "Som bom para jogos, mas o microfone capta muito ruído do ambiente.",
+      "created_at": "2026-10-18T00:25:58.011575+00:00"
+    },
+    {
+      "id": "zpJe0SKnmlqTufNf999gA",
+      "account_id": "Sk1inB4_GZoN02WZSfi7U",
+      "product_id": "5gqv2GsTzdx8YphoJ29zJ",
+      "product_name": "Havit HV-H2002d Fone de Ouvido Gamer com Microfone, Prata | Falante 53mm, Plug 3,5mm, Compatível com XBOX ONE, Compatível com PS4",
+      "rating": 4,
+      "comment": "Confortável por várias horas e o som tem graves fortes. Ótimo custo-benefício.",
+      "created_at": "2026-10-18T00:25:58.052689+00:00"
+    },
+    {
+      "id": "4iNyeUF_OHzrIW_3MtbE8",
+      "account_id": "woGKVafGt7q5WVIK15h19",
+      "product_id": "5gqv2GsTzdx8YphoJ29zJ",
+      "product_name": "Havit HV-H2002d Fone de Ouvido Gamer com Microfone, Prata | Falante 53mm, Plug 3,5mm, Compatível com XBOX ONE, Compatível com PS4",
+      "rating": 2,
+      "comment": "O fio é muito fino e começou a falhar o lado esquerdo depois de três meses.",
+      "created_at": "2026-10-18T00:25:58.079828+00:00"
+    },
+    {
+      "id": "is2D395GSVJbadUeMOLRz",
+      "account_id": "2ae66R2NtCAjDX5RfESzJ",
+      "product_id": "5gqv2GsTzdx8YphoJ29zJ",
+      "product_name": "Havit HV-H2002d Fone de Ouvido Gamer com Microfone, Prata | Falante 53mm, Plug 3,5mm, Compatível com XBOX ONE, Compatível com PS4",
+      "rating": 3,
+      "comment": "Funciona, mas aperta a cabeça de quem usa óculos. O LED é bonito.",
+      "created_at": "2026-10-18T00:25:58.113246+00:00"
+    },
+    {
+      "id": "XEYZ6rW-KQHplTCsJzx3i",
+      "account_id": "4USSAwFpj64oYfeLw6lQa",
+      "product_id": "lW8g17bytoybrkAVnEspi",
+      "product_name": "GameSir G7 SE Controle com Fio para PC, Xbox One, Xbox Series X|S, Gamepad para Jogos Plug and Play (Azul)",
+      "rating": 5,
+      "comment": "Controle excelente pelo preço: gatilhos precisos, botões traseiros e o cabo destacável é muito prático.",
+      "created_at": "2026-10-18T00:25:58.137008+00:00"
+    },
+    {
+      "id": "JrqV83dIqf_DqsWepCBSF",
+      "account_id": "cHtDPOAcPoTPqI3WCz_f0",
+      "product_id": "lW8g17bytoybrkAVnEspi",
+      "product_name": "GameSir G7 SE Controle com Fio para PC, Xbox One, Xbox Series X|S, Gamepad para Jogos Plug and Play (Azul)",
+      "rating": 5,
+      "comment": "Sticks de efeito Hall, sem drift. Uso no PC e no Xbox sem configurar nada.",
+      "created_at": "2026-10-18T00:25:58.180102+00:00"
+    },
+    {
+      "id": "kBERpct_Nce-R_SJSfTf8",
+      "account_id": "xIdUWx-ijNfsaCvHQqkFP",
+      "product_id": "lW8g17bytoybrkAVnEspi",
+      "product_name": "GameSir G7 SE Controle com Fio para PC, Xbox One, Xbox Series X|S, Gamepad para Jogos Plug and Play (Azul)",
+      "rating": 4,
+      "comment": "Ótima pegada e acabamento. O software de personalização poderia ser mais simples.",
+      "created_at": "2026-10-18T00:25:58.21383+00:00"
+    },
+    {
+      "id": "IMQTiDy9xm0F215QKzkUd",
+      "account_id": "2ae66R2NtCAjDX5RfESzJ",
+      "product_id": "lW8g17bytoybrkAVnEspi",
+      "product_name": "GameSir G7 SE Controle com Fio para PC, Xbox One, Xbox Series X|S, Gamepad para Jogos Plug and Play (Azul)",
+      "rating": 5,
+      "comment": "Melhor que o controle original do Xbox em vários aspectos e custa bem menos.",
+      "created_at": "2026-10-18T00:25:58.285582+00:00"
+    },
+    {
+      "id": "yHWjvv8RazVBuRynDjmjz",
+      "account_id": "woGKVafGt7q5WVIK15h19",
+      "product_id": "C4x-OCL6czcY_CPrcXZ_s",
+      "product_name": "Teto para dois (Livro que deu origem à série da Paramount)",
+      "rating": 4,
+      "comment": "Comédia romântica divertida, li depois de ver a série e gostei mais do livro.",
+      "created_at": "2026-10-18T00:25:58.344554+00:00"
+    },
+    {
+      "id": "1hLjtKuxoLpwNvgMxTexz",
+      "account_id": "Sk1inB4_GZoN02WZSfi7U",
+      "product_id": "C4x-OCL6czcY_CPrcXZ_s",
+      "product_name": "Teto para dois (Livro que deu origem à série da Paramount)",
+      "rating": 3,
+      "comment": "Engraçado em várias partes, mas a protagonista me irritou em alguns momentos.",
+      "created_at": "2026-10-18T00:25:58.39031+00:00"
+    },
+    {
+      "id": "zS1IWm0QH31TdqLp-AQtF",
+      "account_id": "cHtDPOAcPoTPqI3WCz_f0",
+      "product_id": "C4x-OCL6czcY_CPrcXZ_s",
+      "product_name": "Teto para dois (Livro que deu origem à série da Paramount)",
+      "rating": 4,
+      "comment": "Leitura rápida e leve, perfeita para o celular no transporte.",
+      "created_at": "2026-10-18T00:25:58.448818+00:00"
+    },
+    {
+      "id": "XGxiRvArR23RWthuBMOeC",
+      "account_id": "xIdUWx-ijNfsaCvHQqkFP",
+      "product_id": "1gPgs8Rnd72grklXHHkGD",
+      "product_name": "Quem pensa enriquece: O legado",
+      "rating": 2,
+      "comment": "Repete muitas ideias do livro original e traz pouca coisa nova. Esperava mais.",
+      "created_at": "2026-10-18T00:25:58.577225+00:00"
+    },
+    {
+      "id": "hwZciyhnURR6ykr9Ugeqi",
+      "account_id": "4USSAwFpj64oYfeLw6lQa",
+      "product_id": "1gPgs8Rnd72grklXHHkGD",
+      "product_name": "Quem pensa enriquece: O legado",
+      "rating": 3,
+      "comment": "Tem bons conselhos sobre mentalidade, mas muito texto motivacional genérico.",
+      "created_at": "2026-10-18T00:25:58.614638+00:00"
+    },
+    {
+      "id": "qN6Z9ATqImmPgw-yRDKCH",
+      "account_id": "2ae66R2NtCAjDX5RfESzJ",
+      "product_id": "1gPgs8Rnd72grklXHHkGD",
+      "product_name": "Quem pensa enriquece: O legado",
+      "rating": 2,
+      "comment": "Não gostei. Promete muito e entrega frases de efeito sem aplicação prática.",
+      "created_at": "2026-10-18T00:25:58.656407+00:00"
+    },
+    {
+      "id": "NaBGTSAqkclA-THGUHFTh",
+      "account_id": "woGKVafGt7q5WVIK15h19",
+      "product_id": "1gPgs8Rnd72grklXHHkGD",
+      "product_name": "Quem pensa enriquece: O legado",
+      "rating": 4,
+      "comment": "Para quem nunca leu o clássico, é uma introdução razoável e de leitura fácil.",
+      "created_at": "2026-10-18T00:25:58.688096+00:00"
+    },
+    {
+      "id": "0nrwgsSvn-idFoVyLmbPz",
+      "account_id": "Sk1inB4_GZoN02WZSfi7U",
+      "product_id": "oKjz84tN1u5PNWLqyaXem",
+      "product_name": "Textos cruéis demais para serem lidos rapidamente (TCD Livro 1)",
+      "rating": 5,
+      "comment": "Textos curtos que acertam em cheio. Li várias vezes os mesmos trechos.",
+      "created_at": "2026-10-18T00:25:58.730926+00:00"
+    },
+    {
+      "id": "j6InwjH3VVxld063wohd8",
+      "account_id": "cHtDPOAcPoTPqI3WCz_f0",
+      "product_id": "oKjz84tN1u5PNWLqyaXem",
+      "product_name": "Textos cruéis demais para serem lidos rapidamente (TCD Livro 1)",
+      "rating": 4,
+      "comment": "Muito bom para ler aos poucos. Alguns textos são meio repetitivos.",
+      "created_at": "2026-10-18T00:25:58.76104+00:00"
+    },
+    {
+      "id": "aDroXllizAjDCU-czYhgw",
+      "account_id": "4USSAwFpj64oYfeLw6lQa",
+      "product_id": "oKjz84tN1u5PNWLqyaXem",
+      "product_name": "Textos cruéis demais para serem lidos rapidamente (TCD Livro 1)",
+      "rating": 5,
+      "comment": "Presenteei duas amigas depois de ler. Sensível e honesto.",
+      "created_at": "2026-10-18T00:25:58.807631+00:00"
+    },
+    {
+      "id": "1k6D-9EwZgebc1a8N2oqA",
+      "account_id": "2ae66R2NtCAjDX5RfESzJ",
+      "product_id": "R2sb-0Qx9sAqiBLcDihgF",
+      "product_name": "História de quem foge e quem fica (Série Napolitana Livro 3)",
+      "rating": 5,
+      "comment": "A série napolitana só melhora. A amizade de Lila e Lenu é retratada de forma brilhante.",
+      "created_at": "2026-10-18T00:25:58.844264+00:00"
+    },
+    {
+      "id": "G_r5iUwKzcpc4sr3wATdb",
+      "account_id": "xIdUWx-ijNfsaCvHQqkFP",
+      "product_id": "R2sb-0Qx9sAqiBLcDihgF",
+      "product_name": "História de quem foge e quem fica (Série Napolitana Livro 3)",
+      "rating": 5,
+      "comment": "Escrita envolvente e personagens complexos. Impossível parar de ler.",
+      "created_at": "2026-10-18T00:25:58.882466+00:00"
+    },
+    {
+      "id": "VRanT8GGMhXpZzuh4N6FP",
+      "account_id": "woGKVafGt7q5WVIK15h19",
+      "product_id": "R2sb-0Qx9sAqiBLcDihgF",
+      "product_name": "História de quem foge e quem fica (Série Napolitana Livro 3)",
+      "rating": 4,
+      "comment": "Excelente, mas é bom ter lido os dois primeiros livros recentemente para lembrar dos personagens.",
+      "created_at": "2026-10-18T00:25:58.92388+00:00"
+    },
+    {
+      "id": "USY0T7ZHEPf8m9YbQ7NFs",
+      "account_id": "Sk1inB4_GZoN02WZSfi7U",
+      "product_id": "R2sb-0Qx9sAqiBLcDihgF",
+      "product_name": "História de quem foge e quem fica (Série Napolitana Livro 3)",
+      "rating": 5,
+      "comment": "Elena Ferrante é genial. O terceiro volume é o mais intenso até agora.",
+      "created_at": "2026-10-18T00:25:58.975522+00:00"
+    }
+  ]
+}

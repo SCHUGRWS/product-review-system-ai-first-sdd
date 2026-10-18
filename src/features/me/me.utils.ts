@@ -1,17 +1,13 @@
-import { format } from "date-fns";
+import { formatMonthYear } from "@/i18n/format";
+import type { Locale } from "@/i18n/locales";
+import type { T } from "@/i18n/message";
 import type { SessionUser } from "@/server/auth/types";
 
-export function greeting(user: Pick<SessionUser, "firstName">) {
-  return `Welcome back, ${user.firstName.trim()}`;
+export function greeting(t: T, user: Pick<SessionUser, "firstName">) {
+  return t("me.greeting", { name: user.firstName.trim() });
 }
 
-// Month and year in UTC, so an account created on the 1st just after midnight
-// UTC does not show the previous month for users west of Greenwich.
-export function memberSince(createdAt: Date) {
-  const utcMonth = new Date(
-    createdAt.getUTCFullYear(),
-    createdAt.getUTCMonth(),
-    1,
-  );
-  return `Member since ${format(utcMonth, "MMMM yyyy")}`;
+// "Member since October 2026" / "Membro desde outubro de 2026" (month in UTC)
+export function memberSince(t: T, locale: Locale, createdAt: Date) {
+  return t("me.memberSince", { date: formatMonthYear(locale, createdAt) });
 }

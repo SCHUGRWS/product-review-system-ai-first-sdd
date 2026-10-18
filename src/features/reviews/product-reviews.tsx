@@ -7,10 +7,11 @@ import { Stars } from "@/components/review-slip";
 import { buttonVariants } from "@/components/ui/button";
 import { PRODUCT_ID_PATTERN } from "@/features/feedback/feedback.schema";
 import { amazonRatingCopy } from "@/features/products/card-copy";
-import { formatPrice } from "@/features/products/format";
+
 import type { Product } from "@/features/products/product.types";
 import { ProductImage } from "@/features/products/product-image";
-import { t } from "@/i18n/t";
+import { formatPrice } from "@/i18n/format";
+import { getLocale, getT } from "@/i18n/server";
 import { PAGE_CONTAINER } from "@/lib/layout";
 import { productFeedbackHref } from "@/lib/routes";
 import { cn } from "@/lib/utils";
@@ -29,10 +30,6 @@ import {
   type ProductReviewStats,
   parseReviewsPage,
 } from "./reviews.schema";
-import type { SummaryLocale } from "./summary.schema";
-
-// Until translation ships every summary is written and cached in English.
-const SUMMARY_LOCALE: SummaryLocale = "en";
 
 type Params = Promise<{ productId: string }>;
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -49,6 +46,7 @@ export async function ProductReviews({
 }) {
   const { productId } = await params;
   const user = await requireUser();
+  const t = await getT();
 
   // Ids that cannot be a product skip the database
   if (!PRODUCT_ID_PATTERN.test(productId)) notFound();
@@ -84,9 +82,9 @@ export async function ProductReviews({
       summary={
         data && (
           <Suspense fallback={<AiSummarySkeleton />}>
+            {/* In the viewer's language (the [lang] segment) */}
             <AiSummary
               product={{ id: product.id, title: product.title }}
-              locale={SUMMARY_LOCALE}
               stats={{ count: data.stats.count, average: data.stats.average }}
             />
           </Suspense>
@@ -108,7 +106,7 @@ export async function ProductReviews({
 // Page frame shared by the content and its skeleton, so the swap keeps the
 // headings in place. Mobile: hero, numbers, summary, reviews. From lg the
 // numbers sit in a narrow column on the right.
-function ProductReviewsLayout({
+async function ProductReviewsLayout({
   header,
   hero,
   stats,
@@ -121,6 +119,7 @@ function ProductReviewsLayout({
   summary: React.ReactNode;
   reviews: React.ReactNode;
 }) {
+  const t = await getT();
   return (
     <>
       {header}
@@ -164,13 +163,14 @@ function ProductReviewsLayout({
 const HERO_GRID =
   "grid items-center gap-6 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-8 lg:grid-cols-[11rem_minmax(0,1fr)_auto]";
 
-function ProductHero({
+async function ProductHero({
   product,
   reviewed,
 }: {
   product: Product;
   reviewed: boolean;
 }) {
+  const [t, locale] = await Promise.all([getT(), getLocale()]);
   return (
     <div className={HERO_GRID}>
       <div className="size-28 overflow-hidden rounded-md bg-paper shadow-[0_14px_28px_-12px_rgb(14_24_110/0.55)] sm:size-36 lg:size-44">
@@ -195,12 +195,12 @@ function ProductHero({
             className="line-clamp-3 rounded-sm underline-offset-[6px] [overflow-wrap:anywhere] hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-paper"
           >
             {product.title}
-            <span className="sr-only"> {t("reviews.opensAmazon")}</span>
+            <span className="sr-only"> {t("common.opensAmazon")}</span>
           </a>
         </h1>
         <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-paper/85">
           <span className="text-[1.5rem] font-extrabold tracking-[-0.02em] text-paper tabular-nums">
-            <span className="sr-only">{t("reviews.currentPrice")} </span>
+            <span className="sr-only">{t("common.currentPrice")} </span>
             {formatPrice(product.priceCents)}
           </span>
           {product.rating !== null && (
@@ -211,7 +211,7 @@ function ProductHero({
                   className="gap-0.5 text-paper [&_svg]:size-4"
                 />
               </span>
-              {amazonRatingCopy(product)}
+              {amazonRatingCopy(t, locale, product)}
             </span>
           )}
         </div>
@@ -228,7 +228,7 @@ function ProductHero({
           </p>
         ) : (
           <Link
-            href={productFeedbackHref(product.id)}
+            href={productFeedbackHref(locale, product.id)}
             className={cn(
               buttonVariants({ size: "lg" }),
               "h-12 w-fit bg-paper px-6 text-[1rem] font-semibold text-cobalt shadow-[0_10px_24px_rgb(14_24_110/0.35)] hover:bg-mist focus-visible:ring-paper/60",
@@ -243,7 +243,8 @@ function ProductHero({
 }
 
 // Static stand-in for the whole page while the session and product load.
-export function ProductReviewsSkeleton() {
+export async function ProductReviewsSkeleton() {
+  const t = await getT();
   return (
     <ProductReviewsLayout
       header={<AppHeaderSkeleton />}

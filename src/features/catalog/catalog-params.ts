@@ -1,4 +1,5 @@
-import { HOME_PATH } from "@/lib/routes";
+import type { Locale } from "@/i18n/locales";
+import { homeHref } from "@/lib/routes";
 
 export type RawSearchParams = Record<string, string | string[] | undefined>;
 
@@ -57,20 +58,24 @@ export function isValidSlug(slug: string) {
   return slug.length <= 120 && SLUG.test(slug);
 }
 
-// Builds a /home URL for a view; page 1 is left out so links stay canonical.
-export function catalogHref({
-  q,
-  category,
-  page,
-}: {
-  q?: string | null;
-  category?: string | null;
-  page?: number;
-}) {
+// Builds a /<locale>/home URL for a view; page 1 is left out so links stay canonical.
+export function catalogHref(
+  locale: Locale,
+  {
+    q,
+    category,
+    page,
+  }: {
+    q?: string | null;
+    category?: string | null;
+    page?: number;
+  },
+) {
   const params = new URLSearchParams();
   if (q) params.set("q", q);
   else if (category) params.set("category", category);
   if (page && page > 1) params.set("page", String(page));
   const query = params.toString();
-  return query ? `${HOME_PATH}?${query}` : HOME_PATH;
+  const home = homeHref(locale);
+  return query ? `${home}?${query}` : home;
 }

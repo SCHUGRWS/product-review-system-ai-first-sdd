@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { Stars } from "@/components/review-slip";
 import { buttonVariants } from "@/components/ui/button";
-import { t } from "@/i18n/t";
+import { formatPrice } from "@/i18n/format";
+import { getLocale, getT } from "@/i18n/server";
 import { productFeedbackHref, productReviewsHref } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 import { amazonRatingCopy, communityCopy, reviewsLinkCopy } from "./card-copy";
-import { formatPrice } from "./format";
 import type { Product } from "./product.types";
 import { ProductImage } from "./product-image";
 
@@ -13,11 +13,12 @@ import { ProductImage } from "./product-image";
 // Boldness stays with the review slip; the card only adds the cobalt discount tag.
 // Review numbers: the app's own first (cobalt stars, ink), Amazon's rating
 // second, smaller, slate and labelled "on Amazon".
-export function ProductCard({ product }: { product: Product }) {
+export async function ProductCard({ product }: { product: Product }) {
+  const [t, locale] = await Promise.all([getT(), getLocale()]);
   const hasDiscount =
     product.discountPercent !== null && product.discountPercent > 0;
-  const community = communityCopy(product.community);
-  const amazon = amazonRatingCopy(product);
+  const community = communityCopy(t, locale, product.community);
+  const amazon = amazonRatingCopy(t, locale, product);
 
   return (
     <article className="group/card relative flex h-full flex-col rounded-lg border border-rule/70 bg-paper p-3 text-ink transition-shadow duration-200 hover:shadow-[0_14px_28px_-16px_rgb(14_24_110/0.45)] motion-reduce:transition-none">
@@ -31,7 +32,9 @@ export function ProductCard({ product }: { product: Product }) {
         />
         {hasDiscount && (
           <span className="absolute top-2 left-2 rounded-sm bg-cobalt px-1.5 py-0.5 text-[0.8125rem] font-bold tracking-[-0.01em] text-paper">
-            {product.discountPercent}% off
+            {t("products.card.discount", {
+              percent: product.discountPercent ?? 0,
+            })}
           </span>
         )}
       </div>
@@ -45,7 +48,7 @@ export function ProductCard({ product }: { product: Product }) {
           className="line-clamp-2 rounded-sm underline-offset-2 outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50"
         >
           {product.title}
-          <span className="sr-only"> (opens Amazon)</span>
+          <span className="sr-only"> {t("common.opensAmazon")}</span>
         </a>
       </h3>
 
@@ -55,7 +58,7 @@ export function ProductCard({ product }: { product: Product }) {
         </span>
         {product.listPriceCents !== null && (
           <s className="text-[0.8125rem] text-slate">
-            <span className="sr-only">Was </span>
+            <span className="sr-only">{t("products.card.was")} </span>
             {formatPrice(product.listPriceCents)}
           </s>
         )}
@@ -103,22 +106,22 @@ export function ProductCard({ product }: { product: Product }) {
       {/* mt-auto keeps the buttons aligned across a row of cards */}
       <div className="mt-auto flex flex-col gap-1.5 pt-3">
         <Link
-          href={productFeedbackHref(product.id)}
+          href={productFeedbackHref(locale, product.id)}
           className={cn(
             buttonVariants({ variant: "outline" }),
             "w-full border-cobalt/40 text-cobalt hover:border-cobalt hover:bg-cobalt hover:text-paper",
           )}
         >
-          Give feedback
+          {t("reviews.giveFeedback")}
         </Link>
         <Link
-          href={productReviewsHref(product.id)}
+          href={productReviewsHref(locale, product.id)}
           className={cn(
             buttonVariants({ variant: "ghost" }),
             "w-full text-slate hover:bg-mist hover:text-ink",
           )}
         >
-          {reviewsLinkCopy(product.community)}
+          {reviewsLinkCopy(t, locale, product.community)}
         </Link>
       </div>
     </article>

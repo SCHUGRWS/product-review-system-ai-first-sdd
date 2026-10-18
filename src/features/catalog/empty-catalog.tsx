@@ -1,14 +1,15 @@
 import Link from "next/link";
+import { getT } from "@/i18n/server";
 import { cn } from "@/lib/utils";
 import { CONTAINER, TEXT_LINK } from "./layout";
 
 // Shown before the first import: nothing is broken, the deals are not in yet.
-export function EmptyCatalog() {
+export async function EmptyCatalog() {
+  const t = await getT();
   return (
     <div className={cn(CONTAINER, "py-14 sm:py-20")}>
-      <Notice title="No products yet">
-        Products appear here after the nightly import of Amazon deals runs.
-        Check back after it has run once.
+      <Notice title={t("catalog.empty.title")}>
+        {t("catalog.empty.body")}
       </Notice>
     </div>
   );

@@ -1,5 +1,7 @@
+import { getT } from "@/i18n/server";
+
 // Receives display strings only, so nothing else from the account reaches the page.
-export function AccountSummary({
+export async function AccountSummary({
   fullName,
   email,
   memberSince,
@@ -8,15 +10,16 @@ export function AccountSummary({
   email: string;
   memberSince: string;
 }) {
+  const t = await getT();
   return (
     <dl className="mt-4 text-[0.9375rem]">
-      <dt className="sr-only">Name</dt>
+      <dt className="sr-only">{t("me.field.name")}</dt>
       <dd className="text-[1.25rem] leading-snug font-bold tracking-[-0.015em] break-words text-ink">
         {fullName}
       </dd>
-      <dt className="sr-only">Email</dt>
+      <dt className="sr-only">{t("me.field.email")}</dt>
       <dd className="mt-1 break-all text-slate">{email}</dd>
-      <dt className="sr-only">Membership</dt>
+      <dt className="sr-only">{t("me.field.membership")}</dt>
       <dd className="mt-4 border-t border-dashed border-rule pt-4 text-ink">
         {memberSince}
       </dd>

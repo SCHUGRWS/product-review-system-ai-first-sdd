@@ -1,15 +1,12 @@
 import { Stars } from "@/components/review-slip";
-import { t } from "@/i18n/t";
+import { formatAverage } from "@/i18n/format";
+import { getLocale, getT } from "@/i18n/server";
 import { type ProductReviewStats, STARS_DESC } from "./reviews.schema";
-import {
-  barPercent,
-  formatAverage,
-  reviewCountLabel,
-  starsLabel,
-} from "./reviews.utils";
+import { barPercent, reviewCountLabel, starsLabel } from "./reviews.utils";
 
 // The app's own numbers for a product: average, count and 5..1 distribution.
-export function ReviewStats({ stats }: { stats: ProductReviewStats }) {
+export async function ReviewStats({ stats }: { stats: ProductReviewStats }) {
+  const [t, locale] = await Promise.all([getT(), getLocale()]);
   return (
     <section
       aria-labelledby="reviews-stats"
@@ -32,7 +29,7 @@ export function ReviewStats({ stats }: { stats: ProductReviewStats }) {
           <p className="mt-3 flex items-baseline gap-2">
             <span className="sr-only">
               {t("reviews.stats.averageLabel", {
-                average: formatAverage(stats.average),
+                average: formatAverage(locale, stats.average),
               })}
             </span>
             <span
@@ -40,7 +37,7 @@ export function ReviewStats({ stats }: { stats: ProductReviewStats }) {
               data-testid="review-average"
               className="text-[3.052rem] leading-none font-extrabold tracking-[-0.04em] text-ink tabular-nums"
             >
-              {formatAverage(stats.average)}
+              {formatAverage(locale, stats.average)}
             </span>
             <span aria-hidden="true" className="text-[1rem] text-slate">
               {t("reviews.stats.outOf")}
@@ -58,7 +55,7 @@ export function ReviewStats({ stats }: { stats: ProductReviewStats }) {
         data-testid="review-count"
         className="mt-2 text-[0.9375rem] text-slate"
       >
-        {reviewCountLabel(stats.count)}
+        {reviewCountLabel(t, locale, stats.count)}
       </p>
 
       <dl
@@ -73,7 +70,7 @@ export function ReviewStats({ stats }: { stats: ProductReviewStats }) {
               data-testid={`distribution-${stars}`}
               className="grid grid-cols-[3.75rem_minmax(0,1fr)_2rem] items-center gap-3 text-[0.875rem]"
             >
-              <dt className="text-slate">{starsLabel(stars)}</dt>
+              <dt className="text-slate">{starsLabel(t, stars)}</dt>
               <dd className="contents">
                 <span
                   aria-hidden="true"
@@ -86,7 +83,9 @@ export function ReviewStats({ stats }: { stats: ProductReviewStats }) {
                 </span>
                 <span className="text-right font-semibold text-ink tabular-nums">
                   <span aria-hidden="true">{count}</span>
-                  <span className="sr-only">{reviewCountLabel(count)}</span>
+                  <span className="sr-only">
+                    {reviewCountLabel(t, locale, count)}
+                  </span>
                 </span>
               </dd>
             </div>

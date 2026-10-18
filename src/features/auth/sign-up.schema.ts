@@ -3,37 +3,40 @@ import { z } from "zod";
 // bcrypt only uses the first 72 bytes of a password
 const BCRYPT_MAX_BYTES = 72;
 
-const required = (label: string) => ({ error: `${label} is required` });
+export const NAME_MAX = 100;
+export const PASSWORD_MIN = 8;
 
-const name = (label: string) =>
+// Messages are keys of src/i18n/dictionaries: the form shows them in the UI
+// language, the REST API in English (src/app/api/v1/_lib/to-response.ts).
+const name = (field: "firstName" | "lastName") =>
   z
-    .string(required(label))
+    .string({ error: `validation.${field}.required` })
     .trim()
-    .min(1, `${label} is required`)
-    .max(100, `${label} must have at most 100 characters`);
+    .min(1, `validation.${field}.required`)
+    .max(NAME_MAX, `validation.${field}.max`);
 
 export const signUpSchema = z
   .object({
-    firstName: name("First name"),
-    lastName: name("Last name"),
+    firstName: name("firstName"),
+    lastName: name("lastName"),
     email: z
-      .string(required("Email"))
+      .string({ error: "validation.email.required" })
       .trim()
       .toLowerCase()
-      .pipe(z.email("Enter a valid email address")),
+      .pipe(z.email("validation.email.invalid")),
     password: z
-      .string(required("Password"))
-      .min(8, "Password must have at least 8 characters")
+      .string({ error: "validation.password.required" })
+      .min(PASSWORD_MIN, "validation.password.min")
       .refine(
         (value) => new TextEncoder().encode(value).length <= BCRYPT_MAX_BYTES,
-        "Password is too long",
+        "validation.password.tooLong",
       ),
     confirmPassword: z
-      .string({ error: "Confirm your password" })
-      .min(1, "Confirm your password"),
+      .string({ error: "validation.confirmPassword.required" })
+      .min(1, "validation.confirmPassword.required"),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
+    message: "validation.confirmPassword.mismatch",
     path: ["confirmPassword"],
   });
 

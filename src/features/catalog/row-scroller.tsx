@@ -2,6 +2,7 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useT } from "@/i18n/client";
 import { cn } from "@/lib/utils";
 
 // Horizontal list that scrolls inside itself (snap on touch). On desktop two
@@ -14,6 +15,7 @@ export function RowScroller({
   label: string;
   children: React.ReactNode;
 }) {
+  const t = useT();
   const listRef = useRef<HTMLUListElement>(null);
   const [edges, setEdges] = useState({ start: true, end: true });
 
@@ -59,14 +61,14 @@ export function RowScroller({
       </ul>
       <div className="pointer-events-none absolute inset-x-0 top-[38%] hidden justify-between px-2 md:flex lg:px-0.5">
         <StepButton
-          label={`Previous products in ${label}`}
+          label={t("catalog.row.previous", { title: label })}
           hidden={edges.start}
           onClick={() => page(-1)}
         >
           <ChevronLeft aria-hidden="true" className="size-5" />
         </StepButton>
         <StepButton
-          label={`Next products in ${label}`}
+          label={t("catalog.row.next", { title: label })}
           hidden={edges.end}
           onClick={() => page(1)}
         >

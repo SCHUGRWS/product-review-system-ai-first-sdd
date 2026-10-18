@@ -2,9 +2,11 @@ import { Suspense } from "react";
 import { AppHeader, AppHeaderSkeleton } from "@/components/app-header";
 import { ReviewSlip } from "@/components/review-slip";
 import { RecentFeedback } from "@/features/feedback/recent-feedback";
+import { getLocale, getT } from "@/i18n/server";
 import { fullName, shortName } from "@/lib/user-name";
 import { requireUser } from "@/server/auth/current-user";
 import { AccountSummary, AccountSummarySkeleton } from "./account-summary";
+import { LanguageSwitch } from "./language-switch";
 import { greeting, memberSince } from "./me.utils";
 import { MeLayout } from "./me-layout";
 import { RecentFeedbackSkeleton } from "./recent-feedback-skeleton";
@@ -13,6 +15,7 @@ import { RecentFeedbackSkeleton } from "./recent-feedback-skeleton";
 // page renders it behind <Suspense>; without a session requireUser redirects.
 export async function MeContent() {
   const user = await requireUser();
+  const [t, locale] = await Promise.all([getT(), getLocale()]);
 
   return (
     <MeLayout
@@ -21,14 +24,17 @@ export async function MeContent() {
           user={{ firstName: user.firstName, lastName: user.lastName }}
         />
       }
-      greeting={greeting(user)}
+      greeting={greeting(t, user)}
       slip={<NextReviewSlip author={shortName(user)} />}
       account={
-        <AccountSummary
-          fullName={fullName(user)}
-          email={user.email}
-          memberSince={memberSince(user.createdAt)}
-        />
+        <>
+          <AccountSummary
+            fullName={fullName(user)}
+            email={user.email}
+            memberSince={memberSince(t, locale, user.createdAt)}
+          />
+          <LanguageSwitch />
+        </>
       }
       feedback={
         <Suspense fallback={<RecentFeedbackSkeleton />}>
@@ -40,13 +46,14 @@ export async function MeContent() {
 }
 
 // Static stand-in for the whole page while the session is read.
-export function MeSkeleton() {
+export async function MeSkeleton() {
+  const t = await getT();
   return (
     <MeLayout
       header={<AppHeaderSkeleton />}
       greeting={
         <>
-          <span className="sr-only">Loading your page</span>
+          <span className="sr-only">{t("me.loading")}</span>
           <span
             aria-hidden="true"
             className="block h-[0.9em] w-[9ch] rounded-full bg-paper/15"
@@ -61,10 +68,11 @@ export function MeSkeleton() {
 
 // A blank slip already signed with the user's name: the review they could write next.
 // It prints in once, when the signed-in content arrives (the page's one motion moment).
-function NextReviewSlip({ author }: { author: string }) {
+async function NextReviewSlip({ author }: { author: string }) {
+  const t = await getT();
   return (
     <ReviewSlip
-      product="Something you bought recently"
+      product={t("me.slipProduct")}
       rating={0}
       author={author}
       animate

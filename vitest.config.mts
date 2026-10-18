@@ -9,6 +9,10 @@ export default defineConfig({
       "server-only": fileURLToPath(
         new URL("./src/test/server-only.ts", import.meta.url),
       ),
+      // The [lang] root param outside a Next.js request (see the stub)
+      "next/root-params": fileURLToPath(
+        new URL("./src/test/root-params.ts", import.meta.url),
+      ),
       // No BotID challenge outside a Next.js request (see the stub)
       "botid/server": fileURLToPath(
         new URL("./src/test/botid-server.ts", import.meta.url),

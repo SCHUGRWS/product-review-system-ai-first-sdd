@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Product } from "@/features/products/product.types";
 import { ProductCard } from "@/features/products/product-card";
+import { getT } from "@/i18n/server";
 import { cn } from "@/lib/utils";
 import {
   ARRIVE,
@@ -13,7 +14,7 @@ import {
 import { RowScroller } from "./row-scroller";
 
 // One labelled horizontal list on /home ("Biggest discounts", a category, ...).
-export function ProductRow({
+export async function ProductRow({
   id,
   title,
   description,
@@ -26,6 +27,7 @@ export function ProductRow({
   products: Product[];
   seeAllHref?: string;
 }) {
+  const t = await getT();
   const headingId = `row-${id}`;
   return (
     <section aria-labelledby={headingId} className="py-6 sm:py-8">
@@ -37,7 +39,7 @@ export function ProductRow({
       />
       {products.length === 0 ? (
         <p className={cn(CONTAINER, "mt-4 text-[1rem] text-slate")}>
-          No products here right now. New deals come in every night.
+          {t("catalog.row.emptyHere")}
         </p>
       ) : (
         <RowScroller label={title}>
@@ -56,7 +58,7 @@ export function ProductRow({
   );
 }
 
-export function RowHeading({
+export async function RowHeading({
   id,
   title,
   description,
@@ -67,6 +69,7 @@ export function RowHeading({
   description?: string;
   seeAllHref?: string;
 }) {
+  const t = await getT();
   return (
     <div
       className={cn(
@@ -87,10 +90,12 @@ export function RowHeading({
           href={seeAllHref}
           className={cn(TEXT_LINK, "text-[0.9375rem]")}
           aria-label={
-            typeof title === "string" ? `See all ${title}` : undefined
+            typeof title === "string"
+              ? t("catalog.row.seeAllLabel", { title })
+              : undefined
           }
         >
-          See all
+          {t("catalog.row.seeAll")}
         </Link>
       )}
     </div>

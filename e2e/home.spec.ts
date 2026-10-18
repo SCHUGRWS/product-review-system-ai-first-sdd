@@ -43,7 +43,7 @@ test.describe("/home catalog", () => {
       page
         .getByRole("region", { name: "TVs", exact: true })
         .getByRole("link", { name: "See all" }),
-    ).toHaveAttribute("href", "/home?category=deals-collection-tvs");
+    ).toHaveAttribute("href", "/en/home?category=deals-collection-tvs");
     await expect(
       page
         .getByRole("region", { name: "Biggest discounts" })
@@ -69,7 +69,7 @@ test.describe("/home catalog", () => {
     const search = page.getByLabel("Search products");
     await search.fill("smart tv");
     await search.press("Enter");
-    await expect(page).toHaveURL("/home?q=smart+tv");
+    await expect(page).toHaveURL("/en/home?q=smart+tv");
     await expect(search).toHaveValue("smart tv");
 
     const count = page.getByText(/^\d+ results? for “smart tv”$/);
@@ -91,7 +91,7 @@ test.describe("/home catalog", () => {
     );
 
     await page.getByRole("button", { name: "Clear search" }).click();
-    await expect(page).toHaveURL("/home");
+    await expect(page).toHaveURL("/en/home");
     await expect(search).toHaveValue("");
     await expect(
       page.getByRole("region", { name: "Biggest discounts" }),
@@ -99,7 +99,7 @@ test.describe("/home catalog", () => {
 
     // The search lives in the URL, so the back button restores it
     await page.goBack();
-    await expect(page).toHaveURL("/home?q=smart+tv");
+    await expect(page).toHaveURL("/en/home?q=smart+tv");
     await expect(search).toHaveValue("smart tv");
   });
 
@@ -108,14 +108,14 @@ test.describe("/home catalog", () => {
     request,
   }) => {
     await signInFresh(page, request);
-    await page.goto("/home?q=xyzzyplugh");
+    await page.goto("/en/home?q=xyzzyplugh");
 
     await expect(page.getByText("0 results for “xyzzyplugh”")).toBeVisible();
     await expect(
       page.getByRole("heading", { name: "No products match “xyzzyplugh”" }),
     ).toBeVisible();
     await page.getByRole("link", { name: "Clear search" }).click();
-    await expect(page).toHaveURL("/home");
+    await expect(page).toHaveURL("/en/home");
     await expect(page.getByRole("region", { name: "Top rated" })).toBeVisible();
   });
 
@@ -126,7 +126,7 @@ test.describe("/home catalog", () => {
       .getByRole("region", { name: "TVs", exact: true })
       .getByRole("link", { name: "See all" })
       .click();
-    await expect(page).toHaveURL("/home?category=deals-collection-tvs");
+    await expect(page).toHaveURL("/en/home?category=deals-collection-tvs");
     await expect(
       page.getByRole("heading", { level: 2, name: "TVs", exact: true }),
     ).toBeVisible();
@@ -137,12 +137,12 @@ test.describe("/home catalog", () => {
     expect(await cards.count()).toBeGreaterThanOrEqual(8);
 
     await page.getByRole("link", { name: "All products" }).click();
-    await expect(page).toHaveURL("/home");
+    await expect(page).toHaveURL("/en/home");
   });
 
   test("paginates a category grid", async ({ page, request }) => {
     await signInFresh(page, request);
-    await page.goto(`/home?category=${PAGING_SLUG}`);
+    await page.goto(`/en/home?category=${PAGING_SLUG}`);
 
     const cards = page
       .getByRole("list", { name: "Paging test" })
@@ -154,7 +154,7 @@ test.describe("/home catalog", () => {
       pagination.getByRole("link", { name: "Page 1" }),
     ).toHaveAttribute("aria-current", "page");
     await pagination.getByRole("link", { name: "Next page" }).click();
-    await expect(page).toHaveURL(`/home?category=${PAGING_SLUG}&page=2`);
+    await expect(page).toHaveURL(`/en/home?category=${PAGING_SLUG}&page=2`);
     await expect(cards).toHaveCount(6);
     await expect(
       pagination.getByRole("link", { name: "Page 2" }),
@@ -180,7 +180,7 @@ test.describe("/home catalog", () => {
     );
     await card.getByRole("link", { name: "See feedback" }).click();
     await expect(page).toHaveURL(/\/products\/[A-Za-z0-9_-]{21}$/);
-    const productId = new URL(page.url()).pathname.split("/")[2];
+    const productId = new URL(page.url()).pathname.split("/")[3];
 
     // Two people review it here: 5 and 2 stars
     for (const rating of [5, 2]) {
@@ -209,7 +209,7 @@ test.describe("/home catalog", () => {
       "4.6 on Amazon (1,234 reviews)",
     );
     await card.getByRole("link", { name: "See 2 reviews" }).click();
-    await expect(page).toHaveURL(`/products/${productId}`);
+    await expect(page).toHaveURL(`/en/products/${productId}`);
     await expect(page.getByTestId("review-count")).toHaveText("2 reviews");
   });
 
@@ -228,7 +228,7 @@ test.describe("/home catalog", () => {
     });
     await card.getByRole("link", { name: "See feedback" }).click();
     await expect(page).toHaveURL(/\/products\/[A-Za-z0-9_-]{21}$/);
-    const productId = new URL(page.url()).pathname.split("/")[2];
+    const productId = new URL(page.url()).pathname.split("/")[3];
     const api = await playwright.request.newContext({ baseURL });
     const account = await createAccount(api);
     await api.post("/api/v1/sign-in", {
@@ -240,7 +240,7 @@ test.describe("/home catalog", () => {
     expect(posted.status()).toBe(201);
     await api.dispose();
 
-    await page.goto("/home");
+    await page.goto("/en/home");
     const row = page.getByRole("region", { name: "Most reviewed here" });
     await expect(row).toBeVisible();
     const counts = await row
@@ -255,7 +255,7 @@ test.describe("/home catalog", () => {
 
   test("explains an unknown category", async ({ page, request }) => {
     await signInFresh(page, request);
-    await page.goto("/home?category=deals-collection-does-not-exist");
+    await page.goto("/en/home?category=deals-collection-does-not-exist");
     await expect(
       page.getByRole("heading", { name: "We could not find that category" }),
     ).toBeVisible();
@@ -290,10 +290,10 @@ test.describe("/home catalog", () => {
   });
 
   test("redirects anonymous visitors to /auth/sign-in", async ({ page }) => {
-    await page.goto("/home");
-    await expect(page).toHaveURL("/auth/sign-in");
-    await page.goto("/home?q=smart+tv");
-    await expect(page).toHaveURL("/auth/sign-in");
+    await page.goto("/en/home");
+    await expect(page).toHaveURL("/en/auth/sign-in");
+    await page.goto("/en/home?q=smart+tv");
+    await expect(page).toHaveURL("/en/auth/sign-in");
   });
 
   test("fits a phone screen; rows scroll inside themselves", async ({

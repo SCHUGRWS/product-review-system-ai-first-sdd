@@ -145,11 +145,27 @@ describe("auth.signIn", () => {
       firstName: "Ada",
       lastName: "Lovelace",
       email: "ada@example.com",
+      locale: "en",
     });
     expect(result).not.toHaveProperty("password");
-    const cookie = ctx.resHeaders.get("Set-Cookie");
+    const [cookie, localeCookie] = ctx.resHeaders.getSetCookie();
     expect(cookie).toMatch(/^prs_session=plain-token;/);
     expect(cookie).toContain("HttpOnly");
+    // The account's language steers URLs without a locale on this device
+    expect(localeCookie).toMatch(/^prs_locale=en;/);
+  });
+
+  it("returns the account's saved language and sets its cookie", async () => {
+    maybeSingle.mockResolvedValue({
+      data: { ...account, locale: "pt-BR" },
+      error: null,
+    });
+    const ctx = makeContext();
+
+    const result = await createCaller(ctx).auth.signIn(credentials);
+
+    expect(result.locale).toBe("pt-BR");
+    expect(ctx.resHeaders.getSetCookie()[1]).toMatch(/^prs_locale=pt-BR;/);
   });
 
   it("rejects a wrong password with UNAUTHORIZED", async () => {

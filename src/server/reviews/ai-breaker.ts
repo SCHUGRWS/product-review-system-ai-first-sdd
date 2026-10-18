@@ -1,5 +1,6 @@
 import "server-only";
 import { getDb } from "@/server/db";
+import type { Tables } from "@/types/database";
 
 // Circuit breaker for the AI summary (specs/product-reviews.md, 4.8). When the
 // prepaid OpenAI credit runs out, or the key is rejected, the server records
@@ -111,7 +112,7 @@ export function aiOutageReason(error: unknown): string | null {
   return null;
 }
 
-type FlagRow = { ai_disabled_until: string | null };
+type FlagRow = Pick<Tables<"app_flags">, "ai_disabled_until">;
 
 /** Until when the AI is off, or null when it is on (also on read errors) */
 export async function readAiDisabledUntil(): Promise<Date | null> {

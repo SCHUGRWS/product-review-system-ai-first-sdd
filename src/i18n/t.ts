@@ -1,13 +1,30 @@
-import { en, type MessageKey } from "./dictionaries/en";
+import { dictionaries, isMessageKey } from "./dictionaries";
+import type { Locale } from "./locales";
+import { formatMessage, type T, VALIDATION_VARS } from "./message";
 
-export type MessageVars = Record<string, string | number>;
+export type { MessageKey } from "./dictionaries/en";
+export type { MessageVars, T } from "./message";
 
-// Phase 0 placeholder (plans/03-product-reviews/execution.md): always English.
-// The translation step makes it locale-aware without changing call sites.
-export function t(key: MessageKey, vars?: MessageVars): string {
-  const template: string = en[key];
-  if (!vars) return template;
-  return template.replace(/\{(\w+)\}/g, (match, name: string) =>
-    name in vars ? String(vars[name]) : match,
-  );
+/** A translator bound to one locale (server side; see ./server.ts for the request's) */
+export function createT(locale: Locale): T {
+  const dictionary = dictionaries[locale];
+  return (key, vars) => formatMessage(dictionary[key], vars);
+}
+
+/** One message in one locale */
+export function translate(
+  locale: Locale,
+  ...args: Parameters<T>
+): ReturnType<T> {
+  return createT(locale)(...args);
+}
+
+/**
+ * A message that may be a key (zod messages and tRPC errors carry keys):
+ * translated when it is one, returned unchanged otherwise.
+ */
+export function translateMessage(locale: Locale, message: string): string {
+  return isMessageKey(message)
+    ? formatMessage(dictionaries[locale][message], VALIDATION_VARS)
+    : message;
 }

@@ -1,9 +1,11 @@
-import { initTRPC, TRPCError } from "@trpc/server";
+import { initTRPC } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError, z } from "zod";
+import { translate } from "@/i18n/t";
 import type { Context } from "@/server/context";
+import { appError, MessageKeyCause } from "@/server/errors";
 
-export const VALIDATION_MESSAGE = "Some fields are invalid";
+export const VALIDATION_MESSAGE = translate("en", "errors.validation");
 
 const t = initTRPC.context<Context>().create({
   transformer: superjson,
@@ -18,8 +20,15 @@ const t = initTRPC.context<Context>().create({
       message: zodError ? VALIDATION_MESSAGE : shape.message,
       data: {
         ...shape.data,
-        // Field-level validation errors, so clients can show them next to inputs
+        // Field-level validation errors, so clients can show them next to
+        // inputs; their messages are keys the UI translates
         zodError,
+        // The UI shows the message in its own language (src/i18n/errors.ts)
+        messageKey: zodError
+          ? ("errors.validation" as const)
+          : error.cause instanceof MessageKeyCause
+            ? error.cause.key
+            : null,
       },
     };
   },
@@ -32,10 +41,7 @@ export const createCallerFactory = t.createCallerFactory;
 // Requires a signed-in user; narrows ctx.user to non-null for the resolver.
 export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
   if (!ctx.user) {
-    throw new TRPCError({
-      code: "UNAUTHORIZED",
-      message: "Sign in to continue",
-    });
+    throw appError("UNAUTHORIZED", "errors.signInRequired");
   }
   return next({ ctx: { ...ctx, user: ctx.user } });
 });

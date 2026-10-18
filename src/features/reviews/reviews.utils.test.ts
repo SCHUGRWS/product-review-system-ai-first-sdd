@@ -1,30 +1,34 @@
 import { describe, expect, it } from "vitest";
+import { createT } from "@/i18n/t";
 import { parseReviewsPage } from "./reviews.schema";
 import {
   barPercent,
-  formatAverage,
   reviewCountLabel,
   starsLabel,
   summaryFooter,
 } from "./reviews.utils";
 
-describe("reviews utils", () => {
-  it("formats the average with one decimal", () => {
-    expect(formatAverage(11 / 3)).toBe("3.7");
-    expect(formatAverage(5)).toBe("5.0");
-  });
+const t = createT("en");
+const pt = createT("pt-BR");
 
+describe("reviews utils", () => {
   it("pluralizes counts", () => {
-    expect(reviewCountLabel(0)).toBe("0 reviews");
-    expect(reviewCountLabel(1)).toBe("1 review");
-    expect(starsLabel(1)).toBe("1 star");
-    expect(starsLabel(4)).toBe("4 stars");
+    expect(reviewCountLabel(t, "en", 0)).toBe("0 reviews");
+    expect(reviewCountLabel(t, "en", 1)).toBe("1 review");
+    expect(reviewCountLabel(t, "en", 2164)).toBe("2,164 reviews");
+    expect(reviewCountLabel(pt, "pt-BR", 2164)).toBe("2.164 avaliações");
+    expect(starsLabel(t, 1)).toBe("1 star");
+    expect(starsLabel(t, 4)).toBe("4 stars");
+    expect(starsLabel(pt, 4)).toBe("4 estrelas");
   });
 
   it("writes the summary footer", () => {
-    expect(summaryFooter(1, new Date("2026-10-18T23:30:00Z"))).toBe(
+    expect(summaryFooter(t, "en", 1, new Date("2026-10-18T23:30:00Z"))).toBe(
       "AI summary of 1 review, updated Oct 18, 2026",
     );
+    expect(
+      summaryFooter(pt, "pt-BR", 3, new Date("2026-10-18T23:30:00Z")),
+    ).toBe("Resumo de IA de 3 avaliações, atualizado em 18 de out. de 2026");
   });
 
   it("computes bar widths", () => {

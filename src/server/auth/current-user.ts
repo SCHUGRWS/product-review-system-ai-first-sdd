@@ -2,6 +2,8 @@ import "server-only";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
+import { getLocale } from "@/i18n/server";
+import { signInHref } from "@/lib/routes";
 import { getSessionUser } from "./session";
 import { SESSION_COOKIE, type SessionUser } from "./types";
 
@@ -19,6 +21,6 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
 
 export async function requireUser(): Promise<SessionUser> {
   const user = await getCurrentUser();
-  if (!user) redirect("/auth/sign-in");
+  if (!user) redirect(signInHref(await getLocale()));
   return user;
 }

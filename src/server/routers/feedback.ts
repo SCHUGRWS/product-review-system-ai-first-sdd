@@ -1,10 +1,11 @@
-import { TRPCError } from "@trpc/server";
 import {
   createFeedbackSchema,
   hasReviewedSchema,
   listFeedbackSchema,
 } from "@/features/feedback/feedback.schema";
 import type { Product } from "@/features/products/product.types";
+import { runInBackground } from "@/server/background";
+import { appError } from "@/server/errors";
 import {
   FeedbackAlreadyExistsError,
   hasFeedbackForProduct,
@@ -12,13 +13,8 @@ import {
   listFeedbackByAccount,
 } from "@/server/feedback/queries";
 import { getProductById } from "@/server/products/queries";
+import { listSummaryLocales, refreshSummary } from "@/server/reviews/summary";
 import { protectedProcedure, router } from "@/server/trpc";
-
-export const ALREADY_REVIEWED_MESSAGE = "You already reviewed this product";
-export const PRODUCT_NOT_FOUND_MESSAGE = "Product not found";
-
-const POST_FAILED_MESSAGE =
-  "Could not post the feedback. Please try again later.";
 
 export const feedbackRouter = router({
   // The author is ctx.user and the product name is the catalog title; any
@@ -31,35 +27,38 @@ export const feedbackRouter = router({
         product = await getProductById(input.productId);
       } catch (error) {
         console.error("[feedback.create] failed to load the product", error);
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: POST_FAILED_MESSAGE,
-        });
+        throw appError("INTERNAL_SERVER_ERROR", "errors.postFailed");
       }
       if (!product) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: PRODUCT_NOT_FOUND_MESSAGE,
-        });
+        throw appError("NOT_FOUND", "errors.productNotFound");
       }
 
+      let feedback: Awaited<ReturnType<typeof insertFeedback>>;
       try {
-        return await insertFeedback(ctx.user.id, product, input);
+        feedback = await insertFeedback(ctx.user.id, product, input);
       } catch (error) {
         // The unique (account_id, product_id) index decides, so two parallel
         // posts cannot both succeed
         if (error instanceof FeedbackAlreadyExistsError) {
-          throw new TRPCError({
-            code: "CONFLICT",
-            message: ALREADY_REVIEWED_MESSAGE,
-          });
+          throw appError("CONFLICT", "errors.alreadyReviewed");
         }
         console.error("[feedback.create] failed to insert feedback", error);
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: POST_FAILED_MESSAGE,
-        });
+        throw appError("INTERNAL_SERVER_ERROR", "errors.postFailed");
       }
+
+      // The AI summary is regenerated outside the request when the reviews
+      // grew 10% (specs/product-reviews.md, 4), so no visitor waits for it.
+      // Only in the author's language and in the languages that already have a
+      // cached summary for the product, so the cost stays tiny (specs/i18n.md).
+      const productId = product.id;
+      const authorLocale = ctx.user.locale;
+      runInBackground("summary refresh", async () => {
+        const cached = await listSummaryLocales(productId);
+        for (const locale of new Set([authorLocale, ...cached])) {
+          await refreshSummary(productId, locale);
+        }
+      });
+      return feedback;
     }),
 
   listMine: protectedProcedure
@@ -69,10 +68,7 @@ export const feedbackRouter = router({
         return await listFeedbackByAccount(ctx.user.id, input.limit);
       } catch (error) {
         console.error("[feedback.listMine] failed to list feedback", error);
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Could not load your feedback. Please try again later.",
-        });
+        throw appError("INTERNAL_SERVER_ERROR", "errors.listMineFailed");
       }
     }),
 
@@ -83,10 +79,7 @@ export const feedbackRouter = router({
         return await hasFeedbackForProduct(ctx.user.id, input.productId);
       } catch (error) {
         console.error("[feedback.hasReviewed] failed to check feedback", error);
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Could not check your feedback. Please try again later.",
-        });
+        throw appError("INTERNAL_SERVER_ERROR", "errors.hasReviewedFailed");
       }
     }),
 });

@@ -1,8 +1,11 @@
+import { getT } from "@/i18n/server";
+
 // Placeholder strips shaped like compact review slips while the list streams in.
-export function RecentFeedbackSkeleton() {
+export async function RecentFeedbackSkeleton() {
+  const t = await getT();
   return (
     <output className="mt-6 grid gap-5 sm:grid-cols-2">
-      <span className="sr-only">Loading your recent feedback</span>
+      <span className="sr-only">{t("me.loadingRecent")}</span>
       {[0, 1].map((n) => (
         <div
           key={n}

@@ -30,8 +30,9 @@ import { shortTitle } from "@/features/feedback/feedback.utils";
 import { ProductSummary } from "@/features/feedback/product-summary";
 import { StarRatingInput } from "@/features/feedback/star-rating-input";
 import { ProductImage } from "@/features/products/product-image";
-import { t } from "@/i18n/t";
-import { HOME_PATH, ME_PATH, productReviewsHref } from "@/lib/routes";
+import { useLocale, useT, useTranslateMessage } from "@/i18n/client";
+import { errorMessage } from "@/i18n/errors";
+import { homeHref, meHref, productReviewsHref, signInHref } from "@/lib/routes";
 import { useTRPC } from "@/trpc/client";
 
 const FIELD_NAMES = ["rating", "comment"] as const;
@@ -47,6 +48,9 @@ export function FeedbackForm({
   const router = useRouter();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const t = useT();
+  const locale = useLocale();
+  const translate = useTranslateMessage();
 
   const form = useForm<CreateFeedbackInput, unknown, CreateFeedbackData>({
     resolver: zodResolver(createFeedbackSchema),
@@ -68,36 +72,37 @@ export function FeedbackForm({
         await queryClient.invalidateQueries({
           queryKey: trpc.feedback.listMine.queryKey(),
         });
-        const reviewsHref = productReviewsHref(product.id);
-        toast.success("Feedback posted", {
+        const reviewsHref = productReviewsHref(locale, product.id);
+        toast.success(t("feedback.form.posted"), {
           action: {
             label: t("reviews.seeAllReviews"),
             onClick: () => router.push(reviewsHref),
           },
         });
-        router.push(ME_PATH);
+        router.push(meHref(locale));
       },
       onError: (error) => {
         const code = error.data?.code;
+        const message = errorMessage(t, error);
         if (code === "UNAUTHORIZED") {
-          toast.error(error.message);
-          router.push("/auth/sign-in");
+          toast.error(message);
+          router.push(signInHref(locale));
           return;
         }
         // Already reviewed (409) or the product left the catalog (404): no
         // field can fix it, so the message goes under the form
         if (code === "CONFLICT" || code === "NOT_FOUND") {
-          form.setError("root", { type: code, message: error.message });
-          toast.error(error.message);
+          form.setError("root", { type: code, message });
+          toast.error(message);
           return;
         }
         const fieldErrors: Partial<Record<string, string[]>> =
           error.data?.zodError?.fieldErrors ?? {};
         for (const name of FIELD_NAMES) {
-          const message = fieldErrors[name]?.[0];
-          if (message) form.setError(name, { message });
+          const fieldMessage = fieldErrors[name]?.[0];
+          if (fieldMessage) form.setError(name, { message: fieldMessage });
         }
-        toast.error(error.message);
+        toast.error(message);
       },
     }),
   );
@@ -126,10 +131,10 @@ export function FeedbackForm({
     >
       <div className="w-full max-w-md">
         <h1 className="text-[1.953rem] leading-tight font-extrabold tracking-[-0.03em] text-ink">
-          Write feedback
+          {t("feedback.form.title")}
         </h1>
         <p className="mt-2 text-[1rem] text-slate">
-          Tell other buyers how the product held up. It is posted as{" "}
+          {t("feedback.form.leadBefore")}{" "}
           <span className="font-semibold text-ink">{author}</span>
           {/* "Ada L." already ends the sentence */}
           {author.endsWith(".") ? "" : "."}
@@ -148,7 +153,7 @@ export function FeedbackForm({
                 id={`${ID}-rating-label`}
                 className="text-[0.9375rem] font-medium"
               >
-                Rating
+                {t("feedback.form.rating")}
               </FieldTitle>
               <Controller
                 control={form.control}
@@ -168,7 +173,14 @@ export function FeedbackForm({
                   />
                 )}
               />
-              <FieldError id={`${ID}-rating-error`} errors={[errors.rating]} />
+              <FieldError
+                id={`${ID}-rating-error`}
+                errors={[
+                  errors.rating && {
+                    message: translate(errors.rating.message),
+                  },
+                ]}
+              />
             </Field>
 
             <Field data-invalid={!!errors.comment} className="gap-1.5">
@@ -176,35 +188,44 @@ export function FeedbackForm({
                 htmlFor={`${ID}-comment`}
                 className="text-[0.9375rem] font-medium"
               >
-                Comment
+                {t("feedback.form.comment")}
               </FieldLabel>
               <Textarea
                 id={`${ID}-comment`}
                 rows={5}
                 maxLength={COMMENT_MAX}
-                placeholder="What did you like, and what would you warn others about?"
+                placeholder={t("feedback.form.placeholder")}
                 aria-invalid={!!errors.comment}
                 aria-describedby={`${ID}-comment-count`}
                 className="min-h-32 bg-paper px-3 py-2.5 text-[1rem] leading-relaxed md:text-[1rem]"
                 {...form.register("comment")}
               />
               <div className="flex items-start justify-between gap-4">
-                <FieldError errors={[errors.comment]} />
+                <FieldError
+                  errors={[
+                    errors.comment && {
+                      message: translate(errors.comment.message),
+                    },
+                  ]}
+                />
                 <p
                   id={`${ID}-comment-count`}
                   className="ml-auto shrink-0 text-[0.8125rem] text-slate tabular-nums"
                 >
-                  {comment.length} of {COMMENT_MAX} characters
+                  {t("feedback.form.characters", {
+                    count: comment.length,
+                    max: COMMENT_MAX,
+                  })}
                 </p>
               </div>
             </Field>
 
             <div className="mt-2 flex flex-col-reverse items-center gap-3 sm:flex-row">
               <Link
-                href={HOME_PATH}
+                href={homeHref(locale)}
                 className="rounded-sm px-2 py-1 text-[1rem] font-medium text-slate underline-offset-4 hover:text-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cobalt"
               >
-                Cancel
+                {t("feedback.form.cancel")}
               </Link>
               <Button
                 type="submit"
@@ -212,18 +233,20 @@ export function FeedbackForm({
                 className="h-12 w-full text-[1rem] font-semibold hover:bg-cobalt-deep sm:ml-auto sm:w-auto sm:px-8"
               >
                 {isPending && <Spinner />}
-                {isPending ? "Posting feedback..." : "Post feedback"}
+                {isPending
+                  ? t("feedback.form.pending")
+                  : t("feedback.form.submit")}
               </Button>
             </div>
             {errors.root && (
               <div role="alert" className="text-[0.9375rem] text-destructive">
-                <p>{errors.root.message}</p>
+                <p>{translate(errors.root.message)}</p>
                 {errors.root.type === "CONFLICT" && (
                   <Link
-                    href={ME_PATH}
+                    href={meHref(locale)}
                     className="mt-1 inline-block rounded-sm font-semibold text-cobalt underline underline-offset-4 hover:text-cobalt-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cobalt"
                   >
-                    See your reviews
+                    {t("feedback.form.seeYourReviews")}
                   </Link>
                 )}
               </div>
@@ -246,6 +269,7 @@ function SlipPreview({
   author: string;
   product: ReviewedProduct;
 }) {
+  const t = useT();
   const [rating, comment] = useWatch({ control, name: ["rating", "comment"] });
   const text = comment.trim();
 
@@ -262,7 +286,7 @@ function SlipPreview({
         >
           {text || (
             <span className="text-slate">
-              Your comment appears here as you type.
+              {t("feedback.form.previewEmpty")}
             </span>
           )}
         </ReviewSlip>

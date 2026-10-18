@@ -60,13 +60,30 @@ Docker containers don't come back by themselves after the computer or WSL restar
 ## 3. Check that it works
 
 ```bash
-curl -s -o /dev/null -w "%{http_code}\n" http://localhost:3000/          # 200
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:3000/en        # 200 (/ redirects to /en or /pt-BR)
 curl -s -o /dev/null -w "%{http_code}\n" http://localhost:5678/healthz   # 200
 docker exec supabase_db_product-review-system-ai-first-sdd \
   psql -U postgres -tAc "select count(*) from products"                 # number of products
 ```
 
-Then open http://localhost:3000, create an account, sign in, search for a product on `/home` and post a feedback.
+Then open http://localhost:3000 (it redirects to `/en` or `/pt-BR` from your browser's language), create an account, sign in, search for a product on `/home` and post a feedback. The language can be changed on `/me`.
+
+AI summaries (needs `OPENAI_API_KEY`) are regenerated in the background after each feedback. After seeding or importing products that already have reviews, fill the missing ones with the app running:
+```bash
+pnpm summaries:warm                  # up to 50 summaries in English
+pnpm summaries:warm --all            # repeat until none is missing (stops if the AI breaker trips)
+pnpm summaries:warm --locale=pt-BR   # another language
+```
+It prints `{ checked, generated, skipped, failed, remaining, stopped }`. To target another server, run it with `APP_URL=https://<project>.vercel.app` in the shell (the `APP_URL` in `.env.local` is n8n's and is not read).
+
+## After a schema change
+
+After adding or pulling a migration, apply it and regenerate the database types the server code is typed with:
+```bash
+supabase migration up --local
+pnpm db:types        # rewrites src/types/database.ts from the local database
+pnpm typecheck
+```
 
 ## 4. Stopping
 
@@ -93,7 +110,7 @@ If `pnpm dev` is running on port 3000, the E2E run reuses it instead of building
 |---|---|
 | `Port 3000 is in use` | Another `pnpm dev`/`pnpm start` is running. Stop it, or find it with `ss -ltnp \| grep :3000` |
 | App errors about `SUPABASE_URL` / `SUPABASE_SECRET_KEY` | `.env.local` is missing or the key changed: copy the "Secret" key from `supabase status` |
-| Database errors about missing tables/columns | Run `supabase migration up --local` |
+| Database errors about missing tables/columns | Run `supabase migration up --local` (then `pnpm db:types`) |
 | `pnpm n8n:up` fails | `.env.local` must exist (the compose file reads the token from it) and Docker must be running |
 | Import runs but nothing is saved | Check that the app is running on port 3000 and that `PRODUCTS_IMPORT_TOKEN` is the same in `.env.local` for both (restart `pnpm dev` and `pnpm n8n:up` after changing it) |
 | Pages extract 0 products | Amazon may have changed its HTML or blocked the request. See "Changing the workflow" in [`n8n/README.md`](../n8n/README.md) |

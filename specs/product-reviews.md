@@ -40,6 +40,8 @@ Decisions (2026-10-18): `plans/03-product-reviews/execution.md`.
         4. While disabled, cached summaries still show and products without one show "Summary unavailable right now"; one log line when the breaker trips, none per visit
         5. After the pause the next visit calls the model again
         6. Without `OPENAI_API_KEY`: the same "unavailable" state, logged at most once per server instance
+    9. Background regeneration: after a feedback is created (tRPC `feedback.create` and `POST /api/v1/feedback`, which runs the same procedure), the summary of that product is refreshed with Next's `after()` (`src/server/background.ts`), once the response has been sent, in the author's language and in every language that already has a cached summary for the product, with the same rules (minimum 3 reviews, 10% rule, breaker, no key → skipped quietly, failures not cached). The page still generates a summary while it renders when one is missing or stale (fallback for a failed background run, products seeded or imported without one, and other languages)
+    10. Warm-up: `POST /api/v1/summaries/warm` (Bearer `PRODUCTS_IMPORT_TOKEN`, the same constant-time check as the product import; 401 otherwise) fills missing or stale summaries of available products with 3 or more reviews, most reviewed first, one at a time. Body (optional JSON): `limit` (default 50, max 200, number of summaries to try) and `locale` (`en` | `pt-BR`, default `en`). Answers `{ checked, generated, skipped, failed, remaining, stopped }` (`checked = generated + skipped + failed + remaining`); `stopped` is `ai-off` when the breaker is or becomes open, `no-key` without `OPENAI_API_KEY`, `time` near the route's 300 s `maxDuration`. Run it with `pnpm summaries:warm [--limit=N] [--locale=pt-BR] [--all]` after a seed or an import
 5. Summary cache: table `product_feedback_summaries`
     1. `product_id` (FK to `products`, cascade on delete), `locale` (`en` / `pt-BR`), primary key `(product_id, locale)`
     2. `summary` (jsonb), `review_count`, `model`, `generated_at`
@@ -47,14 +49,14 @@ Decisions (2026-10-18): `plans/03-product-reviews/execution.md`.
     4. Failures are never cached
     5. Concurrent visits may generate twice; the upsert keeps the last one
     6. RLS enabled with no policies (server only)
-    7. Until translation ships the summary is generated and cached in English (`en`); the locale is already a parameter
+    7. The summary is generated and cached in the viewer's language: the page passes its locale (the `[lang]` segment, `specs/i18n.md`) to `getOrCreateSummary`
 6. Reviews list
     1. Newest first, 20 per page (`?page=N`)
     2. Each review is a review slip: author's short name ("Ada L."), stars, comment (as text, never HTML) and relative date
     3. Empty state "Be the first to review" with a link to the feedback page
     4. tRPC `review.listByProduct({ productId, page })` (signed-in users, paginated; unknown product → `NOT_FOUND`)
 7. The product card (`specs/product.md`) gets a "See feedback" link to this page ("See N reviews" once the product has reviews in the app)
-8. All new UI copy goes through `t("reviews.…")` (`src/i18n/t.ts`)
+8. All new UI copy goes through the dictionaries (`reviews.…` keys), read with `getT()` on the server and `useT()` on the client (`specs/i18n.md`)
 
 ## Non-Functional requirements
 - Performance
@@ -65,7 +67,7 @@ Decisions (2026-10-18): `plans/03-product-reviews/execution.md`.
     - When the prepaid credit runs out the app stops calling OpenAI for hours instead of failing on every visit (4.8)
     - About $0.0006 per summary with `gpt-4.1-nano` (≈5k input tokens, ≈300 output tokens)
 - Security
-    - The summary is server-rendered only; there is no public endpoint that triggers model calls
+    - No public endpoint triggers model calls: they happen while the page renders, after a signed-in user's feedback (at most one refresh per feedback, one feedback per user and product), or through the token-protected warm-up
     - Review text is passed to the model as data (JSON), with an instruction to ignore instructions inside it (prompt injection)
     - No author names or account data are sent to OpenAI
     - The API key lives only in server env vars (`.env.local`), never in the repo
@@ -100,6 +102,8 @@ Decisions (2026-10-18): `plans/03-product-reviews/execution.md`.
 - Without `OPENAI_API_KEY` the summary area shows "Summary unavailable right now" and the rest of the page works
 - With the key, a product with 3 or more reviews shows a summary and a row appears in `product_feedback_summaries`; adding one review to a product with 20 does not call the model again; reaching 22 regenerates it
 - A quota, billing or invalid-key error stops model calls for `AI_DISABLED_HOURS`, while cached summaries keep showing; a timeout or 5xx does not
+- Posting the review that reaches 3 (or the 10% growth) regenerates the summary in the background, so the next visit reads it from the cache
+- `pnpm summaries:warm` fills missing summaries and stops early when the breaker trips; without the token it gets a 401
 - Unknown product id shows the 404 page
 - No horizontal scroll at 320px; the page stays centered at 3440px
 
