@@ -198,7 +198,7 @@ function ProductHero({
             <span className="sr-only"> {t("reviews.opensAmazon")}</span>
           </a>
         </h1>
-        <p className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-paper/85">
+        <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-paper/85">
           <span className="text-[1.5rem] font-extrabold tracking-[-0.02em] text-paper tabular-nums">
             <span className="sr-only">{t("reviews.currentPrice")} </span>
             {formatPrice(product.priceCents)}
@@ -214,7 +214,7 @@ function ProductHero({
               {amazonRatingCopy(product)}
             </span>
           )}
-        </p>
+        </div>
       </div>
 
       <div className="sm:col-start-2 lg:col-start-3">

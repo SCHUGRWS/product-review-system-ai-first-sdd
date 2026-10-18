@@ -63,7 +63,7 @@ export function ProductCard({ product }: { product: Product }) {
 
       <div className="mt-1.5 flex flex-col gap-0.5">
         {community?.kind === "reviews" && (
-          <p
+          <div
             data-testid="community-reviews"
             className="flex flex-wrap items-center gap-x-1.5 text-[0.875rem] text-ink"
           >
@@ -82,7 +82,7 @@ export function ProductCard({ product }: { product: Product }) {
               <span aria-hidden="true">{community.average}</span>
             </span>
             <span className="text-slate">{community.label}</span>
-          </p>
+          </div>
         )}
         {community?.kind === "none" && (
           <p
