@@ -65,6 +65,7 @@ export function ProductCard({ product }: { product: Product }) {
         {community?.kind === "reviews" && (
           <div
             data-testid="community-reviews"
+            data-count={product.community?.count ?? 0}
             className="flex flex-wrap items-center gap-x-1.5 text-[0.875rem] text-ink"
           >
             <span aria-hidden="true">

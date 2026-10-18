@@ -27,6 +27,7 @@ export function createFakeDb() {
     order: chain(),
     range: chain(),
     limit: chain(),
+    in: chain(),
     maybeSingle: vi.fn(() => next()),
     // biome-ignore lint/suspicious/noThenProperty: mimics the thenable query builder
     then: (

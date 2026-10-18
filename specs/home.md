@@ -17,10 +17,11 @@ Now `/home` becomes the product catalog. It shows lists of products imported fro
 3. '/home': catalog
     1. A search field at the top ("Search products")
     2. Without a search, several horizontal lists of product cards (scrollable, keyboard accessible). "Available" products are those of the latest import: seen within 3 days before the most recent import, however long ago it ran (`specs/product.md`, requirement 5). Lists, category pages, search and category counts use this rule:
-        1. "Biggest discounts": available products with the highest discount
-        2. "Top rated": available products with the best Amazon rating (at least 50 reviews)
-        3. One list per category with available products ("TVs", "Video games", "Books", ...), ordered by the number of products
-    3. Each list shows up to 20 products; category lists have a "See all" link to '/home?category=<slug>' (the discount and rating lists have no page of their own)
+        1. "Most reviewed here" (first row): available products with the most reviews posted in this app, ordered by review count, then average rating, then most recent review. Each card shows the app's numbers ("5 reviews here"). The row is hidden while no available product has a review
+        2. "Biggest discounts": available products with the highest discount
+        3. "Top rated": available products with the best Amazon rating (at least 50 reviews)
+        4. One list per category with available products ("TVs", "Video games", "Books", ...), ordered by the number of products
+    3. Each list shows up to 20 products; category lists have a "See all" link to '/home?category=<slug>' (the most reviewed, discount and rating lists have no page of their own)
     4. Category view '/home?category=<slug>': grid with all available products of the category, sorted by discount, 24 per page
     5. Search '/home?q=<text>': grid of results, paginated, with the number of results and an empty state ("No products match …") that suggests clearing the search
     6. The search text and the category live in the URL, so results can be shared and the back button works
@@ -63,7 +64,7 @@ Now `/home` becomes the product catalog. It shows lists of products imported fro
 - date-fns
 
 ## Acceptance criteria
-- '/home' shows "Biggest discounts", "Top rated" and category lists with real imported products
+- '/home' shows "Most reviewed here" (when the app has reviews), "Biggest discounts", "Top rated" and category lists with real imported products
 - Searching "smart tv" shows matching products; clearing the search shows the lists again
 - "See all" opens the category grid
 - A product title opens the Amazon page in a new tab; "Give feedback" opens the feedback page of that product

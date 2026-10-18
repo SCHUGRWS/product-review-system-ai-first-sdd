@@ -7,6 +7,7 @@ import type {
 import { cn } from "@/lib/utils";
 import {
   listCategories,
+  listMostReviewed,
   listProducts,
   searchProducts,
 } from "@/server/products/queries";
@@ -87,6 +88,7 @@ export async function ListsView() {
   if (categories.length === 0) return <EmptyCatalog />;
 
   // Start every query now, in parallel; each row awaits its own
+  const mostReviewed = listMostReviewed(ROW_SIZE);
   const discounts = listProducts({ sort: "discount", pageSize: ROW_SIZE });
   const topRated = listProducts({
     sort: "rating",
@@ -105,6 +107,15 @@ export async function ListsView() {
 
   return (
     <div className="py-4 sm:py-6">
+      <Suspense fallback={<ProductRowSkeleton title="Most reviewed here" />}>
+        <LoadedRow
+          id="most-reviewed"
+          title="Most reviewed here"
+          description="Products our community has reviewed the most"
+          page={mostReviewed}
+          hideWhenEmpty
+        />
+      </Suspense>
       <Suspense fallback={<ProductRowSkeleton title="Biggest discounts" />}>
         <LoadedRow
           id="discounts"
@@ -143,6 +154,7 @@ export async function ListsView() {
 
 export async function LoadedRow({
   page,
+  hideWhenEmpty = false,
   ...row
 }: {
   id: string;
@@ -150,6 +162,8 @@ export async function LoadedRow({
   description?: string;
   seeAllHref?: string;
   page: Promise<ProductPage>;
+  /** Render nothing when the list is empty (e.g. no reviews yet) */
+  hideWhenEmpty?: boolean;
 }) {
   let result: ProductPage;
   try {
@@ -167,6 +181,7 @@ export async function LoadedRow({
       </section>
     );
   }
+  if (hideWhenEmpty && result.items.length === 0) return null;
   return <ProductRow {...row} products={result.items} />;
 }
 

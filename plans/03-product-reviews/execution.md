@@ -63,3 +63,11 @@ Approved 2026-10-18; see [`i18n.md`](i18n.md#approved-decisions-2026-10-18).
     - before pushing: a secret scan of every committed file
     - commits use the GitHub `noreply` address, set in this repository's git config only; it can be switched back later for new commits
 4. The deployment itself (Vercel, Supabase, OpenAI accounts and keys) is done by the user, following `docs/DEPLOY.md`
+
+## Added 2026-10-18: "Most reviewed here" row
+- user request: a new row on `/home` with the products that have the most feedback in the app
+- implementation:
+  - SQL function `most_reviewed_products(max_count)` (migration `20261018180000`): available products ranked by review count, then average, then latest review
+  - `listMostReviewed()` keeps that order and reuses the counts (no second stats query)
+  - first row on `/home`, hidden when empty
+- the translation migration moves to `20261018190000_accounts_locale.sql`

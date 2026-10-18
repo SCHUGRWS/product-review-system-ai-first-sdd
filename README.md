@@ -7,7 +7,7 @@ Stack and components: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 - **Sign-up** ([spec](specs/sign-up.md)): page at `/auth/sign-up`, tRPC procedure `auth.signUp`, REST endpoint `POST /api/v1/sign-up`.
 - **Sign-in** ([spec](specs/sign-in.md), [plan](plans/01-sign-in-home-feedback/sign-in.md)): page at `/auth/sign-in`, tRPC `auth.signIn` / `auth.signOut`, REST `POST /api/v1/sign-in` and `POST /api/v1/sign-out`. Sessions last 7 days.
 - **Product** ([spec](specs/product.md), [plan](plans/02-products/product.md)): catalog imported on demand from Amazon Brazil deals by a local n8n workflow (an optional daily schedule is off by default) ([`n8n/`](n8n/README.md)), REST `POST /api/v1/products/import`, tRPC `product.search` / `product.byId`.
-- **Home** ([spec](specs/home.md), plans [01](plans/01-sign-in-home-feedback/home.md) and [02](plans/02-products/home.md)): `/home` is the product catalog (lists, category pages, search); `/me` is the user's page (account, recent feedback, sign-out).
+- **Home** ([spec](specs/home.md), plans [01](plans/01-sign-in-home-feedback/home.md) and [02](plans/02-products/home.md)): `/home` is the product catalog ("Most reviewed here" from the app's own reviews, discount, rating and category lists, category pages, search); `/me` is the user's page (account, recent feedback, sign-out).
 - **Feedback** ([spec](specs/feedback.md), plans [01](plans/01-sign-in-home-feedback/feedback.md) and [02](plans/02-products/feedback.md)): review of a catalog product at `/products/<id>/feedback` with a live review slip preview, one per user per product; tRPC `feedback.create` / `feedback.listMine` / `feedback.hasReviewed`, REST `POST /api/v1/feedback`.
 
 ## Requirements

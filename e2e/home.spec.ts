@@ -213,6 +213,46 @@ test.describe("/home catalog", () => {
     await expect(page.getByTestId("review-count")).toHaveText("2 reviews");
   });
 
+  test('"Most reviewed here" lists reviewed products, most reviews first', async ({
+    page,
+    request,
+    playwright,
+    baseURL,
+  }) => {
+    // Make sure at least one available product has a review
+    const own = await importOwnProduct(request, "Cafeteira Italiana");
+    await signInFresh(page, request);
+    const card = await findProductCard(page, {
+      query: own.word,
+      title: own.title,
+    });
+    await card.getByRole("link", { name: "See feedback" }).click();
+    await expect(page).toHaveURL(/\/products\/[A-Za-z0-9_-]{21}$/);
+    const productId = new URL(page.url()).pathname.split("/")[2];
+    const api = await playwright.request.newContext({ baseURL });
+    const account = await createAccount(api);
+    await api.post("/api/v1/sign-in", {
+      data: { email: account.email, password: account.password },
+    });
+    const posted = await api.post("/api/v1/feedback", {
+      data: { productId, rating: 4, comment: "Makes a strong coffee." },
+    });
+    expect(posted.status()).toBe(201);
+    await api.dispose();
+
+    await page.goto("/home");
+    const row = page.getByRole("region", { name: "Most reviewed here" });
+    await expect(row).toBeVisible();
+    const counts = await row
+      .getByTestId("community-reviews")
+      .evaluateAll((els) =>
+        els.map((el) => Number(el.getAttribute("data-count"))),
+      );
+    expect(counts.length).toBeGreaterThan(0);
+    expect(counts.every((n) => n >= 1)).toBe(true);
+    expect([...counts].sort((a, b) => b - a)).toEqual(counts);
+  });
+
   test("explains an unknown category", async ({ page, request }) => {
     await signInFresh(page, request);
     await page.goto("/home?category=deals-collection-does-not-exist");

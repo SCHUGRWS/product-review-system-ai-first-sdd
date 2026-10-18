@@ -12,10 +12,12 @@ vi.mock("@/server/auth/current-user", () => ({ requireUser }));
 
 const listCategories = vi.fn<() => Promise<ProductCategory[]>>();
 const listProducts = vi.fn<(opts: unknown) => Promise<ProductPage>>();
+const listMostReviewed = vi.fn<(limit?: number) => Promise<ProductPage>>();
 const searchProducts =
   vi.fn<(q: string, opts?: unknown) => Promise<ProductPage>>();
 vi.mock("@/server/products/queries", () => ({
   listCategories,
+  listMostReviewed,
   listProducts,
   searchProducts,
   getProductById: vi.fn(),
@@ -33,9 +35,8 @@ const { default: HomePage } = await import("./page");
 const { CatalogHeader, CatalogSearch } = await import(
   "@/features/catalog/catalog-chrome"
 );
-const { CatalogView, ListsView, CategoryView, SearchView } = await import(
-  "@/features/catalog/catalog-view"
-);
+const { CatalogView, ListsView, CategoryView, SearchView, LoadedRow } =
+  await import("@/features/catalog/catalog-view");
 const { ProductRow } = await import("@/features/catalog/product-row");
 const { ProductGrid } = await import("@/features/catalog/product-grid");
 const { EmptyCatalog } = await import("@/features/catalog/empty-catalog");
@@ -132,6 +133,7 @@ describe("/home", () => {
     requireUser.mockReset().mockResolvedValue(user);
     listCategories.mockReset().mockResolvedValue(categories);
     listProducts.mockReset().mockResolvedValue(page([product("1")]));
+    listMostReviewed.mockReset().mockResolvedValue(page([product("9")]));
     searchProducts.mockReset().mockResolvedValue(page([]));
   });
 
@@ -182,6 +184,7 @@ describe("/home", () => {
       const { find } = await render(CatalogView({ searchParams: params({}) }));
 
       expect(find(ListsView)).toHaveLength(1);
+      expect(listMostReviewed).toHaveBeenCalledWith(20);
       expect(listProducts).toHaveBeenCalledWith({
         sort: "discount",
         pageSize: 20,
@@ -212,13 +215,15 @@ describe("/home", () => {
         seeAllHref: el.props.seeAllHref,
       }));
       expect(rows).toEqual([
+        { title: "Most reviewed here", seeAllHref: undefined },
         { title: "Biggest discounts", seeAllHref: undefined },
         { title: "Top rated", seeAllHref: undefined },
         { title: "TVs", seeAllHref: "/home?category=deals-collection-tvs" },
         // English label for the slug, not the imported name
         { title: "Books", seeAllHref: "/home?category=deals-collection-books" },
       ]);
-      expect(find(ProductRow)[0].props.products).toEqual([product("1")]);
+      expect(find(ProductRow)[0].props.products).toEqual([product("9")]);
+      expect(find(ProductRow)[1].props.products).toEqual([product("1")]);
     });
 
     it("explains an empty catalog before the first import", async () => {
@@ -239,7 +244,8 @@ describe("/home", () => {
           : page([product("1")]),
       );
       const { find, strings } = await render(ListsView());
-      expect(find(ProductRow)).toHaveLength(3);
+      // most reviewed, discounts and 2 categories; top rated shows the error
+      expect(find(ProductRow)).toHaveLength(4);
       expect(strings).toContain(
         "Could not load these products. Refresh the page to try again.",
       );
@@ -344,6 +350,28 @@ describe("/home", () => {
         defaultValue: "duna",
         autoFocus: true,
       });
+    });
+  });
+
+  describe("most reviewed row", () => {
+    it("renders nothing while nobody has reviewed a product", async () => {
+      const row = await LoadedRow({
+        id: "most-reviewed",
+        title: "Most reviewed here",
+        page: Promise.resolve(page([])),
+        hideWhenEmpty: true,
+      });
+      expect(row).toBeNull();
+    });
+
+    it("renders the row when there are reviewed products", async () => {
+      const row = await LoadedRow({
+        id: "most-reviewed",
+        title: "Most reviewed here",
+        page: Promise.resolve(page([product("1")])),
+        hideWhenEmpty: true,
+      });
+      expect(isValidElement(row)).toBe(true);
     });
   });
 });

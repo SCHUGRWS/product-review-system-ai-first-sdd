@@ -220,6 +220,61 @@ export async function withCommunity(products: Product[]): Promise<Product[]> {
   }));
 }
 
+/**
+ * Available products with the most reviews posted in the app, most reviewed
+ * first (most_reviewed_products, migration 20261018180000). The function also
+ * returns the counts, so no second stats query is needed. Empty when nobody
+ * has reviewed an available product yet.
+ */
+export async function listMostReviewed(
+  limit = DEFAULT_PAGE_SIZE,
+): Promise<ProductPage> {
+  const size = Math.min(MAX_PAGE_SIZE, Math.max(1, Math.floor(limit)));
+  const empty = { items: [], total: 0, page: 1, pageSize: size };
+  const ranked = await getDb().rpc("most_reviewed_products", {
+    max_count: size,
+  });
+  if (ranked.error || !ranked.data) {
+    throw new ProductQueryError("Failed to rank products by reviews", {
+      cause: ranked.error,
+    });
+  }
+  const rows = ranked.data as ReviewStatsRow[];
+  if (rows.length === 0) return empty;
+
+  const { data, error } = await getDb()
+    .from(AVAILABLE_PRODUCTS)
+    .select(COLUMNS)
+    .in(
+      "id",
+      rows.map((row) => row.product_id),
+    );
+  if (error || !data) {
+    throw new ProductQueryError("Failed to load most reviewed products", {
+      cause: error,
+    });
+  }
+  const byId = new Map(
+    (data as unknown as ProductRow[]).map((row) => [row.id, toProduct(row)]),
+  );
+  // Keep the ranking order from the function
+  const items = rows.flatMap((row) => {
+    const product = byId.get(row.product_id);
+    if (!product) return [];
+    const count = Number(row.review_count);
+    return [
+      {
+        ...product,
+        community: {
+          count,
+          average: row.average === null ? null : Number(row.average),
+        },
+      },
+    ];
+  });
+  return { ...empty, items, total: items.length };
+}
+
 /** Categories with available products, the largest first */
 export async function listCategories(): Promise<ProductCategory[]> {
   const { data, error } = await getDb().rpc("list_product_categories");

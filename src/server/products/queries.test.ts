@@ -8,6 +8,7 @@ const {
   getCommunityStats,
   getProductById,
   listCategories,
+  listMostReviewed,
   listProducts,
   ProductQueryError,
   searchProducts,
@@ -348,6 +349,81 @@ describe("product queries", () => {
       await expect(getProductById("prod_1")).rejects.toBeInstanceOf(
         ProductQueryError,
       );
+    });
+  });
+
+  describe("listMostReviewed", () => {
+    const rowB = { ...row, id: "prod_2", asin: "B0GCKFVS2R" };
+    const rowC = { ...row, id: "prod_3", asin: "B0GCKFVS2S" };
+
+    beforeEach(() => {
+      db.reset();
+    });
+
+    it("keeps the ranking order and uses the ranked numbers (no second stats call)", async () => {
+      db.queue(
+        {
+          data: [
+            { product_id: "prod_3", review_count: "5", average: "4.00" },
+            { product_id: "prod_1", review_count: 4, average: 4.75 },
+          ],
+          error: null,
+        },
+        // the product query returns rows in any order
+        { data: [row, rowC], error: null },
+      );
+
+      const page = await listMostReviewed(20);
+
+      expect(db.rpc).toHaveBeenCalledTimes(1);
+      expect(db.rpc).toHaveBeenCalledWith("most_reviewed_products", {
+        max_count: 20,
+      });
+      expect(db.from).toHaveBeenCalledWith("available_products");
+      expect(db.builder.in).toHaveBeenCalledWith("id", ["prod_3", "prod_1"]);
+      expect(page.items.map((p) => [p.id, p.community])).toEqual([
+        ["prod_3", { count: 5, average: 4 }],
+        ["prod_1", { count: 4, average: 4.75 }],
+      ]);
+      expect(page.total).toBe(2);
+    });
+
+    it("drops ranked ids that are no longer available", async () => {
+      db.queue(
+        {
+          data: [
+            { product_id: "prod_2", review_count: 3, average: 3 },
+            { product_id: "prod_1", review_count: 2, average: 5 },
+          ],
+          error: null,
+        },
+        { data: [row], error: null },
+      );
+
+      const page = await listMostReviewed();
+
+      expect(page.items.map((p) => p.id)).toEqual(["prod_1"]);
+      expect(rowB.id).toBe("prod_2");
+    });
+
+    it("returns an empty page without a product query when nobody reviewed yet", async () => {
+      db.queue({ data: [], error: null });
+
+      const page = await listMostReviewed(20);
+
+      expect(page).toEqual({ items: [], total: 0, page: 1, pageSize: 20 });
+      expect(db.from).not.toHaveBeenCalled();
+    });
+
+    it("caps the size at 60 and throws ProductQueryError on database errors", async () => {
+      db.queue({ data: null, error: { message: "boom" } });
+
+      await expect(listMostReviewed(500)).rejects.toBeInstanceOf(
+        ProductQueryError,
+      );
+      expect(db.rpc).toHaveBeenCalledWith("most_reviewed_products", {
+        max_count: 60,
+      });
     });
   });
 });
