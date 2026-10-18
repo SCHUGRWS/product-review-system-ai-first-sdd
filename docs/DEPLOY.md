@@ -46,7 +46,7 @@ These changes are in [`plans/03-product-reviews/deploy-adjustments.md`](../plans
 - [ ] All secrets as **Sensitive** env vars in Vercel: `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `PRODUCTS_IMPORT_TOKEN`, `OPENAI_API_KEY`. Nothing secret under `NEXT_PUBLIC_*`
 - [ ] `PRODUCTS_IMPORT_TOKEN`: at least 32 random characters (`openssl rand -base64 32`), different from the local one. The import route answers 401 without it
 - [ ] **Vercel Firewall:** the single Hobby rate-limit rule on sign-in / sign-up (e.g. 10 requests per 60 s per IP on `/api/trpc/auth.*` and `/api/v1/sign-*`). The app has no rate limiting of its own, and this also protects the AI cost from mass sign-ups
-- [ ] **BotID Basic** (free) on sign-up. This is a code change, not done yet
+- [x] **BotID Basic** (free) on sign-up: done in code (`src/instrumentation-client.ts`, check in `auth.signUp`). It only runs on Vercel; locally it is skipped
 - [ ] **Deployment Protection:** Standard Protection (Vercel Authentication), so preview deployments are private and only production is public. Password protection is not available on Hobby
 - [ ] **OpenAI:** a dedicated project and key, a hard spend limit, auto-recharge off
 - [ ] **Supabase:** secret key server-only (already so), RLS on with no policies (already so), SSL enforcement on, MFA on the Supabase, Vercel and GitHub accounts

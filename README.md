@@ -100,6 +100,7 @@ Signing in creates a row in `sessions` and sets the `prs_session` cookie (`HttpO
 All bodies are JSON. Errors have the shape `{ "error" }`, plus `fields` (field-level messages) on validation errors.
 
 ### `POST /api/v1/sign-up`
+On Vercel, sign-up is protected by Vercel BotID: requests must come from the app's pages (the browser attaches a challenge), so plain `curl` calls get `403`. Locally the check is skipped.
 ```json
 { "firstName": "Ada", "lastName": "Lovelace", "email": "ada@example.com",
   "password": "supersecret", "confirmPassword": "supersecret" }
@@ -108,6 +109,7 @@ All bodies are JSON. Errors have the shape `{ "error" }`, plus `fields` (field-l
 |---|---|
 | 201 | Account created: `{ "id", "email" }` |
 | 400 | Invalid JSON or invalid fields: `{ "error", "fields" }` |
+| 403 | Blocked by BotID (Vercel only) |
 | 409 | Email already registered |
 | 500 | Unexpected server error (logged on the server) |
 

@@ -81,9 +81,7 @@ export function ProductCard({ product }: { product: Product }) {
               </span>
               <span aria-hidden="true">{community.average}</span>
             </span>
-            <span className="text-slate">
-              {community.label}
-            </span>
+            <span className="text-slate">{community.label}</span>
           </p>
         )}
         {community?.kind === "none" && (

@@ -1,5 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import bcrypt from "bcryptjs";
+import { checkBotId } from "botid/server";
 import { nanoid } from "nanoid";
 import { signInSchema } from "@/features/auth/sign-in.schema";
 import { signUpSchema } from "@/features/auth/sign-up.schema";
@@ -31,6 +32,13 @@ type AccountRow = {
 
 export const authRouter = router({
   signUp: publicProcedure.input(signUpSchema).mutation(async ({ input }) => {
+    // Vercel BotID blocks automated sign-ups. It only works on Vercel (VERCEL
+    // is set there): a local `next start`, like the E2E server, has no
+    // challenge to read, so the check is skipped outside Vercel.
+    if (process.env.VERCEL && (await checkBotId()).isBot) {
+      throw new TRPCError({ code: "FORBIDDEN", message: "Access denied" });
+    }
+
     const salt = await bcrypt.genSalt(BCRYPT_COST);
     const passwordHash = await bcrypt.hash(input.password, salt);
     const id = nanoid();

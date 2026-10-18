@@ -15,6 +15,10 @@ const createSession = vi.fn();
 const deleteSession = vi.fn();
 vi.mock("@/server/auth/session", () => ({ createSession, deleteSession }));
 
+// BotID verdict for sign-up; every test is human unless it says otherwise
+const checkBotId = vi.fn();
+vi.mock("botid/server", () => ({ checkBotId }));
+
 const { createCaller } = await import("./_app");
 const { makeContext, testUser } = await import("@/server/test-utils");
 const caller = createCaller(makeContext());
@@ -30,6 +34,9 @@ const input = {
 describe("auth.signUp", () => {
   beforeEach(() => {
     insert.mockReset();
+    checkBotId.mockReset();
+    checkBotId.mockResolvedValue({ isBot: false });
+    vi.unstubAllEnvs();
   });
 
   it("stores the account with a hashed password", async () => {
@@ -78,6 +85,27 @@ describe("auth.signUp", () => {
     expect(error).toBeInstanceOf(TRPCError);
     expect(error.code).toBe("BAD_REQUEST");
     expect(insert).not.toHaveBeenCalled();
+  });
+
+  it("rejects a sign-up classified as a bot with FORBIDDEN before touching the database", async () => {
+    vi.stubEnv("VERCEL", "1");
+    checkBotId.mockResolvedValueOnce({ isBot: true });
+
+    const error = await caller.auth.signUp(input).catch((e) => e);
+
+    expect(error).toBeInstanceOf(TRPCError);
+    expect(error.code).toBe("FORBIDDEN");
+    expect(insert).not.toHaveBeenCalled();
+  });
+
+  it("skips the BotID check outside Vercel", async () => {
+    vi.stubEnv("VERCEL", "");
+    insert.mockResolvedValue({ error: null });
+
+    await caller.auth.signUp(input);
+
+    expect(checkBotId).not.toHaveBeenCalled();
+    expect(insert).toHaveBeenCalledOnce();
   });
 });
 
