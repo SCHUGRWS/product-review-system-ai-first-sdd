@@ -1,0 +1,4 @@
+{
+  "//": "Browserless runs extract-deals.js as an ES module; Node and the tests load it the same way",
+  "type": "module"
+}

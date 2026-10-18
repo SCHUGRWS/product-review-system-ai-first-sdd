@@ -1,0 +1,321 @@
+{
+  "id": "AmzDealsImport01",
+  "name": "Amazon deals import",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "e470ad14-d68b-4da8-8932-f04f5c9e949d",
+      "name": "Run manually",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 0 * * *"
+            }
+          ]
+        }
+      },
+      "id": "fe13e4fc-9d57-47cf-8288-2c6fa5630c5a",
+      "name": "Every day at 00:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 200],
+      "notes": "Off by default: runs only while the workflow is published (pnpm n8n:schedule:on)",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Pages to read, one at a time. Edit CATEGORIES in n8n/build-workflow.mjs, not here.\n// The Browserless function is n8n/browserless/extract-deals.js, inlined by the build.\nconst EXTRACT_CODE = \"// Browserless /function code: renders one Amazon Brazil deals page and extracts\\n// the deal cards. Single source of truth for the scraper selectors: the n8n\\n// workflow inlines this file (n8n/build-workflow.mjs) and the tests run it\\n// against a saved page (n8n/browserless/__fixtures__/deals.html).\\n//\\n// context: { url, maxScrolls?, settleMs?, maxProducts?, timeoutMs? }\\n// returns (sent as JSON by Browserless): { url, status, scrolls, products }\\n// Each product has the raw strings of the import payload (specs/product.md):\\n// { asin, title, url, imageUrl, price, listPrice, discountPercent, rating, reviewCount }\\n\\nconst USER_AGENT =\\n  \\\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36\\\";\\n\\nconst CARD = '[data-testid=\\\"product-card\\\"]';\\n\\nconst sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));\\n\\n// Runs inside the page: every selector the scraper depends on is here.\\nfunction extractCards(cardSelector) {\\n  const text = (el) => (el?.textContent ?? \\\"\\\").replace(/\\\\s+/g, \\\" \\\").trim();\\n  const money = (el) => {\\n    const match = text(el).match(/R\\\\$\\\\s?[\\\\d.]+(?:,\\\\d{2})?/);\\n    return match ? match[0].replace(/\\\\s/g, \\\" \\\") : null;\\n  };\\n  // Amazon may render the title twice in the same element (\\\"AbcAbc\\\")\\n  const dedupe = (value) => {\\n    const half = value.length / 2;\\n    return Number.isInteger(half) && value.slice(0, half) === value.slice(half)\\n      ? value.slice(0, half).trim()\\n      : value;\\n  };\\n\\n  return Array.from(document.querySelectorAll(cardSelector)).map((card) => {\\n    const asin = card.getAttribute(\\\"data-asin\\\") ?? \\\"\\\";\\n    const titleEl = card.querySelector(`[id=\\\"title-${asin}\\\"]`);\\n    const img = card.querySelector(\\\"img\\\");\\n    const link = card.querySelector('a[data-testid=\\\"product-card-link\\\"]');\\n    const prices = card.querySelector('[data-testid=\\\"price-section\\\"]');\\n    const badge = text(card.querySelector('[data-component=\\\"dui-badge\\\"]'));\\n    const discount = badge.match(/(\\\\d{1,3})\\\\s?%/);\\n    const reviews = card.querySelector('[data-testid=\\\"review-count-link\\\"]');\\n\\n    const title =\\n      text(titleEl?.querySelector(\\\".a-truncate-full\\\")) ||\\n      dedupe(text(titleEl)) ||\\n      (img?.getAttribute(\\\"alt\\\") ?? \\\"\\\").trim();\\n\\n    return {\\n      asin,\\n      title,\\n      url: link ? link.href : null,\\n      imageUrl: img ? img.src : null,\\n      price: money(\\n        prices?.querySelector(\\\".a-price:not(.a-text-price) .a-offscreen\\\") ??\\n          prices?.querySelector(\\\".a-price:not(.a-text-price)\\\"),\\n      ),\\n      listPrice: money(\\n        prices?.querySelector(\\\".a-text-price .a-offscreen\\\") ??\\n          prices?.querySelector('[data-a-strike=\\\"true\\\"]'),\\n      ),\\n      discountPercent: discount ? Number(discount[1]) : null,\\n      rating: text(card.querySelector('[data-testid=\\\"review-value\\\"]')) || null,\\n      // aria-label has the exact count (\\\"2.164 avaliações\\\"); the text is rounded (\\\"(2,2 mil)\\\")\\n      reviewCount:\\n        (reviews?.getAttribute(\\\"aria-label\\\") ?? \\\"\\\").trim() ||\\n        text(reviews) ||\\n        null,\\n    };\\n  });\\n}\\n\\nexport default async function ({ page, context = {} }) {\\n  const {\\n    url = \\\"https://www.amazon.com.br/deals\\\",\\n    maxScrolls = 15,\\n    settleMs = 1200,\\n    maxProducts = 150,\\n    timeoutMs = 45000,\\n  } = context;\\n\\n  // Puppeteer (Browserless) and Playwright (tests) name these differently\\n  if (typeof page.setUserAgent === \\\"function\\\") {\\n    await page.setUserAgent(USER_AGENT);\\n  }\\n  if (typeof page.setViewport === \\\"function\\\") {\\n    await page.setViewport({ width: 1366, height: 900 });\\n  } else if (typeof page.setViewportSize === \\\"function\\\") {\\n    await page.setViewportSize({ width: 1366, height: 900 });\\n  }\\n  await page.setExtraHTTPHeaders({ \\\"Accept-Language\\\": \\\"pt-BR,pt;q=0.9\\\" });\\n\\n  const response = await page.goto(url, {\\n    waitUntil: \\\"domcontentloaded\\\",\\n    timeout: timeoutMs,\\n  });\\n  const status = response ? response.status() : null;\\n  await page.waitForSelector(CARD, { timeout: timeoutMs });\\n\\n  // The grid is virtualized: cards leave the DOM when they scroll out of view, so\\n  // collect what is rendered at each step while scrolling down a screen at a time.\\n  // More cards load near the end; stop after a few steps with nothing new.\\n  const products = new Map();\\n  let scrolls = 0;\\n  let stale = 0;\\n  while (true) {\\n    const before = products.size;\\n    for (const card of await page.evaluate(extractCards, CARD)) {\\n      if (card.asin && !products.has(card.asin)) products.set(card.asin, card);\\n    }\\n    stale = products.size > before ? 0 : stale + 1;\\n    if (scrolls >= maxScrolls || products.size >= maxProducts || stale >= 3) {\\n      break;\\n    }\\n    await page.evaluate(() => window.scrollBy(0, window.innerHeight * 0.8));\\n    scrolls++;\\n    await sleep(settleMs);\\n    await page.waitForSelector(CARD, { timeout: timeoutMs }).catch(() => {});\\n  }\\n\\n  return {\\n    url,\\n    status,\\n    scrolls,\\n    products: [...products.values()].slice(0, maxProducts),\\n  };\\n}\\n\";\nconst CATEGORIES = [[\"automotive\",\"Automotive\"],[\"baby\",\"Baby\"],[\"beauty\",\"Beauty\"],[\"books\",\"Books\"],[\"computers\",\"Computers\"],[\"eBooks\",\"eBooks\"],[\"electronics\",\"Electronics\"],[\"eletro\",\"Appliances\"],[\"fashion\",\"Fashion\"],[\"grocery\",\"Grocery\"],[\"health-and-personal-care\",\"Health and personal care\"],[\"home\",\"Home\"],[\"kitchen\",\"Kitchen\"],[\"lawn-and-garden\",\"Garden\"],[\"moveis\",\"Furniture\"],[\"office-products\",\"Office\"],[\"pet-products\",\"Pet products\"],[\"sports\",\"Sports\"],[\"tools\",\"Tools\"],[\"toys-and-games\",\"Toys and games\"],[\"tvs\",\"TVs\"],[\"video-games\",\"Video games\"]];\n\nif (!$env.PRODUCTS_IMPORT_TOKEN) {\n  throw new Error(\"PRODUCTS_IMPORT_TOKEN is not set for n8n (see n8n/README.md)\");\n}\n\nconst pages = [\n  { slug: \"deals-all\", name: \"More deals\", url: \"https://www.amazon.com.br/deals\" },\n  ...CATEGORIES.map(([slug, name]) => ({\n    slug: \"deals-collection-\" + slug,\n    name,\n    url: \"https://www.amazon.com.br/deals?bubble-id=deals-collection-\" + slug,\n  })),\n];\n\n// Optional DEALS_CATEGORIES=\"tvs,books\" (or \"deals-all\") limits the run\nconst only = String($env.DEALS_CATEGORIES || \"\")\n  .split(\",\")\n  .map((s) => s.trim())\n  .filter(Boolean);\nconst selected = only.length\n  ? pages.filter((p) => only.includes(p.slug) || only.includes(p.slug.replace(\"deals-collection-\", \"\")))\n  : pages;\n\nreturn selected.map((page) => ({\n  json: {\n    category: { slug: page.slug, name: page.name },\n    url: page.url,\n    browserless: { code: EXTRACT_CODE, context: { url: page.url, scrolls: 4 } },\n  },\n}));"
+      },
+      "id": "14cd3ece-4e7f-4c7c-8555-3493b90afd3b",
+      "name": "Categories",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 100]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "f28a1fda-0cae-4bc0-8b4f-e752e0010e83",
+      "name": "Each category",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [440, 100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BROWSERLESS_URL }}/function?token={{ $env.BROWSERLESS_TOKEN }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.browserless) }}",
+        "options": {
+          "timeout": 150000,
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "eeba9771-ccca-45aa-870e-97bc327f564c",
+      "name": "Render deals page",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, 200],
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "jsCode": "// Splits the extracted products into import requests of at most 100.\n// A failed or empty page becomes one item without products, so the loop goes on.\nconst page = $('Each category').itemMatching(0).json;\nconst result = $input.first().json;\nconst products = Array.isArray(result.products) ? result.products : [];\nconst base = { category: page.category, found: products.length };\n\nif (products.length === 0) {\n  const error = result.error\n    ? result.error.message || JSON.stringify(result.error)\n    : \"No deal cards found\";\n  return [{ json: { ...base, products: [], error } }];\n}\n\nconst items = [];\nfor (let i = 0; i < products.length; i += 100) {\n  items.push({ json: { ...base, products: products.slice(i, i + 100), error: null } });\n}\nreturn items;"
+      },
+      "id": "e9defba3-cfa0-432c-88bc-9913f8d409de",
+      "name": "Make batches",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "8ef0993e-2444-4a05-87b0-3b12e443fd7c",
+              "leftValue": "={{ $json.products.length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "e518f5f1-db67-4618-83f5-edeb79dcef79",
+      "name": "Has products?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1100, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.APP_URL }}/api/v1/products/import",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.PRODUCTS_IMPORT_TOKEN }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ category: $json.category, products: $json.products }) }}",
+        "options": {
+          "timeout": 60000,
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "61158f0c-63ca-464c-801c-8971c56bb294",
+      "name": "Send to app",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1320, 120],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// One line per import request (or per failed page) for the final summary.\nconst batch = $('Make batches').item.json;\nconst response = $json;\nconst row = {\n  category: batch.category.slug,\n  found: batch.found,\n  sent: batch.products.length,\n  saved: 0,\n  skipped: 0,\n  error: batch.error,\n};\n\nif (batch.products.length > 0) {\n  if (typeof response.saved === \"number\") {\n    row.saved = response.saved;\n    row.skipped = response.skipped.length;\n    row.skippedReasons = response.skipped.slice(0, 5);\n  } else {\n    row.error = response.error\n      ? response.error.message || JSON.stringify(response.error)\n      : \"Import request failed\";\n  }\n}\nreturn { json: row };"
+      },
+      "id": "24bb8181-3d81-442c-86e9-c3a9e549c4af",
+      "name": "Record result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1540, 200]
+    },
+    {
+      "parameters": {
+        "amount": 8,
+        "unit": "seconds"
+      },
+      "id": "a87de35f-77f1-421a-8765-e1f5a8508655",
+      "name": "Pause",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1760, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Final summary: categories read, products sent and saved, failures.\nconst rows = $input.all().map((item) => item.json);\nconst byCategory = {};\nfor (const row of rows) {\n  const c = (byCategory[row.category] ??= { category: row.category, found: row.found, sent: 0, saved: 0, skipped: 0, errors: [] });\n  c.sent += row.sent;\n  c.saved += row.saved;\n  c.skipped += row.skipped;\n  if (row.error) c.errors.push(row.error);\n}\nconst categories = Object.values(byCategory);\nconst failed = categories.filter((c) => c.errors.length > 0);\nconst sum = (key) => categories.reduce((total, c) => total + c[key], 0);\n\nreturn [{\n  json: {\n    categories: categories.length,\n    succeeded: categories.length - failed.length,\n    failed: failed.map((c) => ({ category: c.category, errors: c.errors })),\n    productsFound: sum(\"found\"),\n    productsSent: sum(\"sent\"),\n    productsSaved: sum(\"saved\"),\n    productsSkipped: sum(\"skipped\"),\n    perCategory: categories.map(({ errors, ...c }) => c),\n  },\n}];"
+      },
+      "id": "90c8819e-474d-44a5-8180-518963696153",
+      "name": "Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, -40]
+    }
+  ],
+  "connections": {
+    "Run manually": {
+      "main": [
+        [
+          {
+            "node": "Categories",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Every day at 00:00": {
+      "main": [
+        [
+          {
+            "node": "Categories",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Categories": {
+      "main": [
+        [
+          {
+            "node": "Each category",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Each category": {
+      "main": [
+        [
+          {
+            "node": "Summary",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Render deals page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Render deals page": {
+      "main": [
+        [
+          {
+            "node": "Make batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Make batches": {
+      "main": [
+        [
+          {
+            "node": "Has products?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has products?": {
+      "main": [
+        [
+          {
+            "node": "Send to app",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Record result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send to app": {
+      "main": [
+        [
+          {
+            "node": "Record result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Record result": {
+      "main": [
+        [
+          {
+            "node": "Pause",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pause": {
+      "main": [
+        [
+          {
+            "node": "Each category",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo",
+    "saveManualExecutions": true
+  },
+  "active": false,
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": []
+}
