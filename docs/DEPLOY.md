@@ -1,6 +1,8 @@
 # Publishing the project (free tier study)
 
-Researched on 2026-10-17/18 from the official docs listed at the end. Prices and limits change, so check those pages before deploying.
+Researched on 2026-10-17/18 from the official docs listed at the end, and updated with what the real deployment needed on 2026-10-18 (live at https://product-review-system-ai-first-sdd.vercel.app: Vercel Hobby in `gru1` São Paulo, Supabase Free in São Paulo). Prices and limits change, so check those pages before deploying.
+
+Placeholders look like `<project-ref>`: replace the whole thing, angle brackets included.
 
 ## Verdict
 The web app can run **for free** and reasonably securely on **Vercel Hobby + Supabase Free**. Two parts are not "100% free in the cloud":
@@ -43,39 +45,57 @@ These changes are in [`plans/03-product-reviews/deploy-adjustments.md`](../plans
 - **Images straight from Amazon:** no Vercel Image Optimization. `referrerPolicy="no-referrer"`, sizes 1x / 1.5x / 2x from Amazon's own URL tokens
 
 ## Security checklist (all available on free plans)
-- [ ] All secrets as **Sensitive** env vars in Vercel: `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `PRODUCTS_IMPORT_TOKEN`, `OPENAI_API_KEY`. Nothing secret under `NEXT_PUBLIC_*`
+- [x] All secrets as **Sensitive** env vars in Vercel: `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `PRODUCTS_IMPORT_TOKEN`, `OPENAI_API_KEY`. Nothing secret under `NEXT_PUBLIC_*`
 - [ ] `PRODUCTS_IMPORT_TOKEN`: at least 32 random characters (`openssl rand -base64 32`), different from the local one. The import route answers 401 without it
-- [ ] **Vercel Firewall:** the single Hobby rate-limit rule on sign-in / sign-up (e.g. 10 requests per 60 s per IP on `/api/trpc/auth.*` and `/api/v1/sign-*`). The app has no rate limiting of its own, and this also protects the AI cost from mass sign-ups
+- [x] **Vercel Firewall:** the single Hobby rate-limit rule on sign-in / sign-up. Rule in use: request path **starts with** `/api/trpc/auth.` **or** starts with `/api/v1/sign-`, **10 requests per 300 s per IP**, action **Deny** (429). Verified on production: 10 × 401 (wrong password), then 429. The app has no rate limiting of its own, and this also protects the AI cost from mass sign-ups
 - [x] **BotID Basic** (free) on sign-up: done in code (`src/instrumentation-client.ts`, check in `auth.signUp`). It only runs on Vercel; locally it is skipped
 - [ ] **Deployment Protection:** Standard Protection (Vercel Authentication), so preview deployments are private and only production is public. Password protection is not available on Hobby
 - [ ] **OpenAI:** a dedicated project and key, a hard spend limit, auto-recharge off
-- [ ] **Supabase:** secret key server-only (already so), RLS on with no policies (already so), SSL enforcement on, MFA on the Supabase, Vercel and GitHub accounts
+- [x] **Supabase:** secret key server-only, RLS on with no policies (both in the code and migrations)
+- [ ] **Supabase:** SSL enforcement on, MFA on the Supabase, Vercel and GitHub accounts
 - [ ] **Backups:** `pg_dump` from time to time (Free has none)
 - [ ] **Repository:** public is fine as long as no secrets are committed (`.env*` is gitignored); deployments from forks need your approval
 
 ## Step by step
 1. **GitHub:** create the repository and push the code (no secrets: check `git status` for `.env.local`).
 2. **Supabase:**
-    1. Create a Free project in a region close to where the Vercel functions will run (e.g. São Paulo `sa-east-1` for both).
-    2. Apply the migrations:
+    1. Create a Free project in a region close to where the Vercel functions will run (e.g. São Paulo `sa-east-1` for both). Options on the creation screen:
+
+        | Option | Choice | Why |
+        |---|---|---|
+        | Enable Data API | **ON** | `@supabase/supabase-js` talks to the database through it (PostgREST) |
+        | Automatically expose new tables | **ON** | The migrations rely on the default grants to `service_role` (the secret key). RLS with no policies still keeps `anon` / `authenticated` out. Turning it off would need explicit `grant`s in a migration |
+        | Enable automatic RLS | **ON** | Matches the migrations (every table has RLS on) |
+        | Connect GitHub | **Skip** | Migrations are applied with `supabase db push` |
+
+    2. Log in to the CLI. `supabase login` needs an interactive terminal: run it in your own terminal, not through a tool or script without a TTY.
+    3. Link the project and apply the migrations (12, including the demo data):
         ```bash
-        supabase login
-        pnpm db:link --project-ref <project-ref>
-        pnpm db:push
+        pnpm db:link --project-ref <project-ref>   # recent CLIs may not ask for the database password
+        supabase db push --dry-run                 # lists the migrations it would apply
+        supabase db push                           # same as pnpm db:push
         ```
-    3. Turn on SSL enforcement, and MFA on the account.
+        `<project-ref>` is the id in the dashboard URL (`https://supabase.com/dashboard/project/<project-ref>`).
+    4. Turn on SSL enforcement, and MFA on the account.
 3. **OpenAI:**
     1. Buy the amount you want to spend (minimum $5) and turn off auto-recharge.
     2. Create a project with its own API key and a hard spend limit.
 4. **Vercel:**
     1. "Add New Project", import the GitHub repository (Next.js preset).
-    2. Set the function region next to Supabase.
-    3. Add the env vars from the checklist as Sensitive.
-    4. Deploy.
-5. **Smoke test:**
-    - sign up and sign in
-    - `/home` loads (empty until the first import)
-    - `curl -X POST https://<project>.vercel.app/api/v1/products/import` returns **401**
+    2. Skip the optional "Supabase" integration Vercel offers: it creates a separate, Vercel-managed Supabase project and uses different env var names than this app reads.
+    3. Add the env vars as Sensitive:
+
+        | Variable | Value |
+        |---|---|
+        | `SUPABASE_URL` | Exactly `https://<project-ref>.supabase.co` (Project Settings > API, or Connect). Not the dashboard URL, not a leftover placeholder |
+        | `SUPABASE_SECRET_KEY` | The **Secret** key, `sb_secret_...` (Project Settings > API Keys). Not the publishable key (`sb_publishable_...`) |
+        | `PRODUCTS_IMPORT_TOKEN` | `openssl rand -base64 32`, different from the local one |
+        | `OPENAI_API_KEY` | Key of the dedicated OpenAI project |
+
+        A wrong `SUPABASE_URL` shows up as `getaddrinfo ENOTFOUND` in the runtime logs, and sign-in answers 500.
+    4. Settings > Functions > Function Region: **São Paulo (gru1)**, next to Supabase.
+    5. Deploy. Env var changes only apply to new deployments: after changing one, use **Redeploy** on the latest deployment.
+5. **Smoke test:** see [Production smoke test](#production-smoke-test) below.
 6. **First import from your machine:**
     1. In `.env.local` set `APP_URL=https://<project>.vercel.app` and the **production** `PRODUCTS_IMPORT_TOKEN`.
     2. Run `pnpm n8n:up` and `pnpm n8n:import`.
@@ -87,6 +107,19 @@ These changes are in [`plans/03-product-reviews/deploy-adjustments.md`](../plans
     - run an import (or just open the app) at least once a week, so Supabase doesn't pause
     - `pg_dump` now and then
     - check the OpenAI balance; when it's gone the summaries freeze until you add credit
+
+## Production smoke test
+Run after the first deploy and after env var changes. `<app>` is the deployment URL, e.g. `https://<project>.vercel.app`.
+- Pages answer **200** in both locales: `/en`, `/pt-BR`, `/en/auth/sign-in`, `/pt-BR/auth/sign-in`
+- `/home` without a locale **redirects** (307) to `/en/home` or `/pt-BR/home` (cookie or browser language)
+- The token-protected routes answer **401** without a token:
+    ```bash
+    curl -s -o /dev/null -w "%{http_code}\n" -X POST <app>/api/v1/products/import
+    curl -s -o /dev/null -w "%{http_code}\n" -X POST <app>/api/v1/summaries/warm
+    ```
+- Sign in with the demo account (`demo@example.com` / `demo-review-2026`): `/home` shows the catalog and the "Most reviewed here" row
+- A product with 3+ reviews (any card in "Most reviewed here") shows the **AI summary** in English and, on the `/pt-BR/...` URL, in Portuguese; `product_feedback_summaries` gets a row per language
+- Optional: 11 quick wrong-password sign-ins return 401 ten times, then **429** (firewall rule)
 
 ## Alternatives considered
 | Option | Cost | Why not chosen |

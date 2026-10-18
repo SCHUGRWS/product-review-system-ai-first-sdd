@@ -1,9 +1,90 @@
 # Product Review System
 
-Spec-driven project: features are described in [`specs/`](specs) before implementation, and their implementation plans live in [`plans/`](plans).
-Stack and components: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+A spec-driven, AI-assisted product review app. The catalog is a real snapshot of Amazon Brazil's deals, imported by an n8n workflow that renders the pages in headless Chrome (Browserless); signed-in users review products, and each product with three or more reviews gets an AI summary (Mastra agent + OpenAI) of what people like and dislike, written in the viewer's language. The whole UI is available in English and Brazilian Portuguese. Every feature was specified in [`specs/`](specs) and planned in [`plans/`](plans) before any code was written.
 
-## Implemented features
+**Live demo:** https://product-review-system-ai-first-sdd.vercel.app \
+**Demo login:** `demo@example.com` / `demo-review-2026`
+
+> **Study project.** This is a non-profit study and portfolio project. Data you enter is used only to run the demo, and the app never sends emails. To keep it free to run, some features (product imports, AI summaries) may be turned off at times. Questions or requests: open a [GitHub issue](https://github.com/SCHUGRWS/product-review-system-ai-first-sdd/issues).
+
+## Screenshots
+| | |
+|---|---|
+| ![Landing page](docs/screenshots/landing-en.png) | ![Catalog with "Most reviewed here"](docs/screenshots/home-en.png) |
+| Landing page (`/en`) | Catalog with "Most reviewed here" (`/en/home`) |
+| ![Product page with AI summary in English](docs/screenshots/product-reviews-en.png) | ![Product page with AI summary in Portuguese](docs/screenshots/product-reviews-pt-BR.png) |
+| Product reviews and AI summary (English) | The same product in Brazilian Portuguese |
+| ![Feedback form with live review slip preview](docs/screenshots/feedback-form-en.png) | <img src="docs/screenshots/home-mobile-pt-BR.png" alt="Catalog on a phone, in Portuguese" width="260"> |
+| Feedback form with a live "review slip" preview | Catalog on a phone (390 px, `/pt-BR/home`) |
+
+## Features
+- **Catalog from real deals:** 1,001 products from amazon.com.br/deals, with discount, rating and category lists, category pages and Portuguese full-text search
+- **Reviews:** one review per user per product (1–5 stars + comment), with a live preview; a "Most reviewed here" row ranks products by the app's own reviews
+- **AI summaries:** overall sentiment, likes and dislikes, cached per product and language, refreshed in the background after new reviews, with a circuit breaker when the OpenAI credit runs out
+- **Two languages:** every page under `/en/...` or `/pt-BR/...`, language saved on the account
+- **Own authentication:** server-side sessions in Postgres (HttpOnly cookie, hashed token), Vercel BotID on sign-up, firewall rate limit on sign-in/sign-up
+- **REST API** (`/api/v1`) next to tRPC, both running the same procedures
+- **Demo data in a migration:** synthetic accounts and 1,064 reviews, so every fresh database has content
+
+## Architecture
+```mermaid
+flowchart LR
+  user([Browser])
+  subgraph vercel["Vercel Hobby · gru1 São Paulo"]
+    fw["Firewall rate limit<br/>sign-in / sign-up"]
+    next["Next.js 16<br/>pages · tRPC · REST /api/v1<br/>BotID on sign-up"]
+    mastra["Mastra agent<br/>summaries cached · background refresh<br/>circuit breaker"]
+  end
+  db[("Supabase Postgres · São Paulo<br/>RLS on, no policies<br/>server-only secret key")]
+  openai["OpenAI<br/>gpt-4.1-nano"]
+  subgraph local["Developer machine (Docker)"]
+    n8n["n8n workflow<br/>manual runs"]
+    bl["Browserless<br/>headless Chrome"]
+  end
+  amazon["amazon.com.br/deals"]
+  imgs["m.media-amazon.com<br/>product images"]
+
+  user --> fw --> next
+  next --> db
+  next --> mastra --> openai
+  n8n --> bl --> amazon
+  n8n -- "POST /api/v1/products/import<br/>Bearer token" --> next
+  user -. images .-> imgs
+```
+
+| Layer | Stack |
+|---|---|
+| Frontend | Next.js 16 (App Router, Cache Components), React 19, TypeScript, Tailwind CSS 4, shadcn/Base UI, React Query, React Hook Form + Zod |
+| API | tRPC 11, REST routes in `/api/v1` calling the same procedures, own sessions (bcryptjs, `node:crypto`) |
+| Data | Supabase Postgres (PostgREST via `@supabase/supabase-js`, generated types, full-text search, RLS) |
+| AI | Mastra agent, OpenAI `gpt-4.1-nano` |
+| Import | n8n + Browserless (headless Chrome) in Docker |
+| Hosting | Vercel Hobby + Supabase Free, both in São Paulo |
+| Quality | Biome, TypeScript, Vitest, pgTAP, Playwright |
+
+More detail: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+
+## How it was built
+The project follows spec-driven development with AI coding agents:
+1. **Specs** ([`specs/`](specs)): one file per feature, written from a fixed template ([`specs/_template.md`](specs/_template.md)) with numbered requirements. Specs hold only what the template asks for; no implementation details.
+2. **Plans** ([`plans/`](plans)): implementation plans in numbered rounds, each with an `execution.md` that splits the work:
+   - [`01-sign-in-home-feedback`](plans/01-sign-in-home-feedback)
+   - [`02-products`](plans/02-products)
+   - [`03-product-reviews`](plans/03-product-reviews)
+   - [`04-demo-data-architecture`](plans/04-demo-data-architecture)
+3. **Execution:** sub-agents implemented the plans in parallel, against shared contracts (types, tRPC routers, database schema) fixed in the plan up front, so their work fit together.
+4. **Verification:** an orchestrator agent checked every round before it was accepted: lint, typecheck, Vitest, pgTAP, and Playwright E2E against a production build. No failing check was accepted as "expected".
+
+## Quality
+| Type | Count | Command |
+|---|---|---|
+| Unit (Vitest) | 501 tests in 51 files | `pnpm test` |
+| End-to-end (Playwright, production build) | 57 tests in 10 spec files | `pnpm test:e2e` |
+| SQL (pgTAP) | 2 files, 11 assertions | `pnpm db:test` |
+
+Plus `pnpm lint` (Biome) and `pnpm typecheck`. Details in [Tests](#tests).
+
+## Implemented features (specs and plans)
 - **Sign-up** ([spec](specs/sign-up.md)): page at `/auth/sign-up`, tRPC procedure `auth.signUp`, REST endpoint `POST /api/v1/sign-up`.
 - **Sign-in** ([spec](specs/sign-in.md), [plan](plans/01-sign-in-home-feedback/sign-in.md)): page at `/auth/sign-in`, tRPC `auth.signIn` / `auth.signOut`, REST `POST /api/v1/sign-in` and `POST /api/v1/sign-out`. Sessions last 7 days.
 - **Product** ([spec](specs/product.md), [plan](plans/02-products/product.md)): catalog imported on demand from Amazon Brazil deals by a local n8n workflow (an optional daily schedule is off by default) ([`n8n/`](n8n/README.md)), REST `POST /api/v1/products/import`, tRPC `product.search` / `product.byId`.
@@ -69,7 +150,7 @@ Lists, category pages and search show the products of the latest import: those s
 ## Using a hosted Supabase project
 The code is the same for local and hosted databases. Only the environment variables change.
 
-1. Create a project at [supabase.com](https://supabase.com/dashboard).
+1. Create a project at [supabase.com](https://supabase.com/dashboard) (which creation options to pick: [`docs/DEPLOY.md`](docs/DEPLOY.md#step-by-step)).
 2. Link it and apply the migrations:
    ```bash
    supabase login
@@ -85,7 +166,9 @@ The code is the same for local and hosted databases. Only the environment variab
 The secret key bypasses Row Level Security, so keep it server-side only and never prefix it with `NEXT_PUBLIC_`. The `accounts`, `sessions`, `products`, `feedbacks`, `product_feedback_summaries` and `app_flags` tables have RLS enabled and no policies, so the public (publishable/anon) key cannot read or write them.
 
 ## Deploying (Vercel)
-Import the repository in Vercel, set the two variables above (plus `PRODUCTS_IMPORT_TOKEN` if an n8n instance will import into it, and `OPENAI_API_KEY` for the AI summary), and deploy. Vercel serves the app over HTTPS, and the app sends an HSTS header in production. Free-plan details: [`docs/DEPLOY.md`](docs/DEPLOY.md).
+Full guide, including the lessons from the real deployment and a production smoke test: [`docs/DEPLOY.md`](docs/DEPLOY.md).
+
+In short: import the repository in Vercel, set the two variables above (plus `PRODUCTS_IMPORT_TOKEN` if an n8n instance will import into it, and `OPENAI_API_KEY` for the AI summary), and deploy. Vercel serves the app over HTTPS, and the app sends an HSTS header in production. Free-plan details: [`docs/DEPLOY.md`](docs/DEPLOY.md).
 
 - **Product images** load straight from `m.media-amazon.com` (`next/image` with `unoptimized`, Amazon's own size variants as `srcSet`), so they never use Vercel Image Optimization or its Hobby quota.
 - **AI summary** circuit breaker: when OpenAI answers with a quota or billing error (`insufficient_quota`, `billing_hard_limit_reached`) or rejects the key (401), the app stops calling the model for `AI_DISABLED_HOURS` (default 6), stored in the `app_flags` table. Cached summaries still show; products without one show "Summary unavailable right now". Timeouts and 5xx errors do not trip it. To turn the AI back on sooner, clear `app_flags.ai_disabled_until`.
@@ -110,14 +193,6 @@ Import the repository in Vercel, set the two variables above (plus `PRODUCTS_IMP
 | `pnpm n8n:import` | Import the deals workflow in n8n (unpublished: manual runs only) |
 | `pnpm n8n:schedule:on` / `pnpm n8n:schedule:off` | Publish / unpublish the workflow, turning the daily 00:00 run on / off |
 | `pnpm n8n:build` | Rebuild the workflow JSON after editing `n8n/build-workflow.mjs` or the extractor |
-
-## Tests
-- **Unit (Vitest):** `src/**/*.test.ts`. The database and Next.js request APIs are mocked, so no services are needed.
-- **SQL (pgTAP):** `supabase/tests/*.sql`, run with `pnpm db:test` against the local database. Each file runs in a transaction that is rolled back, so local data is kept.
-- **End-to-end (Playwright):** `e2e/*.spec.ts`. Requires the local database (`pnpm db:start`) with migrations applied and `PRODUCTS_IMPORT_TOKEN` in `.env.local`. Tests seed fixture products through the import endpoint (no Amazon access), and a global teardown deletes the test accounts (`e2e-*@example.com`) and fixture products (`E2E*` ASINs) at the end. The first run may need `pnpm exec playwright install chromium` (and `sudo pnpm exec playwright install-deps chromium` on a bare Linux/WSL).
-
-## Authentication
-Signing in creates a row in `sessions` and sets the `prs_session` cookie (`HttpOnly`, `SameSite=Lax`, `Secure` in production, 7 days). The cookie holds a random token; the database stores only its SHA-256 hash. Signing out deletes the row and clears the cookie. Sign-in also sets `prs_locale` (the account's language, 1 year), which `src/proxy.ts` uses for URLs without a locale; sign-out keeps it. Server Components read the user with `getCurrentUser()` / `requireUser()` (`src/server/auth/current-user.ts`), and tRPC procedures that need a user use `protectedProcedure`.
 
 ## REST API
 All bodies are JSON. Errors have the shape `{ "error" }`, plus `fields` (field-level messages) on validation errors.
@@ -188,3 +263,14 @@ Generates missing or stale AI summaries (available products with 3+ reviews, mos
 | 400 | Invalid JSON, limit or locale |
 | 401 | Missing or wrong token |
 | 500 | Unexpected server error |
+
+## Authentication
+Signing in creates a row in `sessions` and sets the `prs_session` cookie (`HttpOnly`, `SameSite=Lax`, `Secure` in production, 7 days). The cookie holds a random token; the database stores only its SHA-256 hash. Signing out deletes the row and clears the cookie. Sign-in also sets `prs_locale` (the account's language, 1 year), which `src/proxy.ts` uses for URLs without a locale; sign-out keeps it. Server Components read the user with `getCurrentUser()` / `requireUser()` (`src/server/auth/current-user.ts`), and tRPC procedures that need a user use `protectedProcedure`.
+
+## Tests
+- **Unit (Vitest):** `src/**/*.test.ts`. The database and Next.js request APIs are mocked, so no services are needed.
+- **SQL (pgTAP):** `supabase/tests/*.sql`, run with `pnpm db:test` against the local database. Each file runs in a transaction that is rolled back, so local data is kept.
+- **End-to-end (Playwright):** `e2e/*.spec.ts`. Requires the local database (`pnpm db:start`) with migrations applied and `PRODUCTS_IMPORT_TOKEN` in `.env.local`. Tests seed fixture products through the import endpoint (no Amazon access), and a global teardown deletes the test accounts (`e2e-*@example.com`) and fixture products (`E2E*` ASINs) at the end. The first run may need `pnpm exec playwright install chromium` (and `sudo pnpm exec playwright install-deps chromium` on a bare Linux/WSL).
+
+## License
+[MIT](LICENSE) © 2026 SCHUGRWS
